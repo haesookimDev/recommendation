@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  postgres-server:
+    env_file:
+      - .env
+    image: postgres:14.0
+    container_name: postgres-server
+    ports:
+      - ${PORT}:${PORT}
+    environment:
+      - POSTGRES_USER: ${USERNAME}
+      - POSTGRES_PASSWORD: ${USERPASSWORD}
+      - POSTGRES_DB: ${DBNAME}
