@@ -12,3 +12,32 @@ services:
       - POSTGRES_USER: ${USERNAME}
       - POSTGRES_PASSWORD: ${USERPASSWORD}
       - POSTGRES_DB: ${DBNAME}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-U", {USERNAME}, "-d", {DBNAME}]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  tarveller-data-generator:
+    build:
+      context: .
+      dockerfile: tarveller.Dockerfile
+    container_name: tarveller-data-generator
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+    command: ["postgres-server"]
+
+  visitareainfo-data-generator:
+    build:
+      context: .
+      dockerfile: visitareainfo.Dockerfile
+    container_name: visitareainfo-data-generator
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+    command: ["postgres-server"]
+
+networks:
+  default:
+    name: mlops-network
