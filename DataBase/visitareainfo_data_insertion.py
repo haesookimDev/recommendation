@@ -5,29 +5,31 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 
-HOST_URL = os.environ.get('HOST_URL')
-USERNAME = os.environ.get('USERNAME')
-USERPASSWORD = os.environ.get('USERPASSWORD')
-DBNAME = os.environ.get('DBNAME')
-PORT = os.environ.get('PORT')
+load_dotenv()
+
+HOST_URL = os.getenv('DB_CONTAINER_HOST')
+USERNAME = os.getenv('POSTGRES_USER')
+USERPASSWORD = os.getenv('POSTGRES_PASSWORD')
+DBNAME = os.getenv('POSTGRES_DB')
+PORT = os.getenv('PORT')
 
 def get_data():
-    VAI = pd.read_csv("./Data/Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
+    VAI = pd.read_csv("Data/Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
+    
 
     return VAI
 
 def split_YMD(x: str)->int:
-    x_1 = x['VISIT_START_YMD'].split('~')
-    YMD = x_1[0].split('-')
+    YMD = x.split('-')
 
     return int(YMD[0]), int(YMD[1]), int(YMD[2])
 
 
 def preprocessing(VAI):
     
-    PRE_VAI=VAI['YMD'].apply(split_YMD)
+    VAI.loc['YMD']=VAI['VISIT_START_YMD'].apply(split_YMD)
     
-    return PRE_VAI
+    return VAI
 
 def insert_data(db_connect, PRE_VAI):
 

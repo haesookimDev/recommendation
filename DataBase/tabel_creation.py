@@ -46,7 +46,6 @@ def create_table(db_connect):
         id SERIAL PRIMARY KEY,
         TRAVELER_ID CHAR(7),
         TRAVEL_ID CHAR(9),
-        AGE_GRP NUMBER(3),
         TRAVEL_PERIOD number(2)
     );
     CREATE TABLE IF NOT EXISTS travel_purpose (

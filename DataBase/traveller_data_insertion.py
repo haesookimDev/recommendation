@@ -6,15 +6,17 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 
-HOST_URL = os.environ.get('HOST_URL')
-USERNAME = os.environ.get('USERNAME')
-USERPASSWORD = os.environ.get('USERPASSWORD')
-DBNAME = os.environ.get('DBNAME')
-PORT = os.environ.get('PORT')
+load_dotenv()
+
+HOST_URL = os.getenv('DB_CONTAINER_HOST')
+USERNAME = os.getenv('POSTGRES_USER')
+USERPASSWORD = os.getenv('POSTGRES_PASSWORD')
+DBNAME = os.getenv('POSTGRES_DB')
+PORT = os.getenv('PORT')
 
 def get_data():
-    TMA = pd.read_csv("./Data/Central/TL_csv/tn_traveller_master_여행객 Master_A.csv")
-    TA = pd.read_csv("./Data/Central/TL_csv/tn_travel_여행_A.csv")
+    TMA = pd.read_csv("Data/Central/TL_csv/tn_traveller_master_여행객_Master_A.csv")
+    TA = pd.read_csv("Data/Central/TL_csv/tn_travel_여행_A.csv")
 
     return TMA, TA
 
@@ -97,17 +99,19 @@ def preprocessing(TMA, TA):
                    'TRAVEL_MOTIVE_2', 
                    'TRAVEL_MOTIVE_3']]
     
-    PRE_TA = TA[['TRAVELER_ID', 'TRAVEL_ID', 'AGE_GRP']]
+    PRE_TA = TA[['TRAVELER_ID', 'TRAVEL_ID']]
 
-    PRE_TA['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
+    PRE_TA.loc['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
 
-    TP_STRING = TA['TRAVEL_PURPOSE']
-    TP_STRING = TP_STRING.split(';')
+    for i in TA['TRAVEL_PURPOSE']:
+        TP_STRING=i.split(';')
+        
     TP_DICT['TRAVEL_ID'] = PRE_TA['TRAVEL_ID']
-
     for i in TP_STRING:
         if i.isdigit():
             TP_DICT[TP_CD_DICT[int(i)]]=1
+    
+    print(TP_DICT['TRAVEL_ID'])
     
     return PRE_TMA, PRE_TA, TP_DICT
 
@@ -159,11 +163,10 @@ def insert_data(db_connect, PRE_TMA, PRE_TA, TP_DICT):
             {PRE_TMA.TRAVEL_MOTIVE_3},
         );
     INSERT INTO travel
-        ('TRAVELER_ID', 'TRAVEL_ID', 'AGE_GRP', 'TRAVEL_PERIOD')
+        ('TRAVELER_ID', 'TRAVEL_ID', 'TRAVEL_PERIOD')
         VALUES (
             {PRE_TA.TRAVELER_ID},
             {PRE_TA.TRAVEL_ID},
-            {PRE_TA.AGE_GRP},
             {PRE_TA.TRAVEL_PERIOD},
         );
     INSERT INTO travel

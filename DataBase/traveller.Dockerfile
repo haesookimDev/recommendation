@@ -13,4 +13,5 @@ COPY traveller_data_insertion.py traveller_data_insertion.py
 COPY .env .env
 COPY Data/ Data/
 
+
 ENTRYPOINT ["python", "traveller_data_insertion.py"]
