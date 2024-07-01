@@ -7,13 +7,13 @@ services:
     image: postgres:14.0
     container_name: postgres-server
     ports:
-      - ${PORT}:${PORT}
+      - 5432:5432
     environment:
-      - POSTGRES_USER: ${USERNAME}
-      - POSTGRES_PASSWORD: ${USERPASSWORD}
-      - POSTGRES_DB: ${DBNAME}
+      POSTGRES_USER: ${USERNAME}
+      POSTGRES_PASSWORD: ${USERPASSWORD}
+      POSTGRES_DB: ${DBNAME}
     healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-U", {USERNAME}, "-d", {DBNAME}]
+      test: ["CMD", "pg_isready", "-q", "-U", "${USERNAME}", "-d", "${DBNAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,8 +21,8 @@ services:
   tarveller-data-generator:
     build:
       context: .
-      dockerfile: tarveller.Dockerfile
-    container_name: tarveller-data-generator
+      dockerfile: traveller.Dockerfile
+    container_name: traveller-data-generator
     depends_on:
       postgres-server:
         condition: service_healthy

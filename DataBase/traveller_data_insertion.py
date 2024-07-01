@@ -13,8 +13,8 @@ DBNAME = os.environ.get('DBNAME')
 PORT = os.environ.get('PORT')
 
 def get_data():
-    TMA = pd.read_csv("./Central/TL_csv/tn_traveller_master_여행객 Master_A.csv")
-    TA = pd.read_csv("./Central/TL_csv/tn_travel_여행_A.csv")
+    TMA = pd.read_csv("./Data/Central/TL_csv/tn_traveller_master_여행객 Master_A.csv")
+    TA = pd.read_csv("./Data/Central/TL_csv/tn_travel_여행_A.csv")
 
     return TMA, TA
 

@@ -12,7 +12,7 @@ DBNAME = os.environ.get('DBNAME')
 PORT = os.environ.get('PORT')
 
 def get_data():
-    VAI = pd.read_csv("./Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
+    VAI = pd.read_csv("./Data/Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
 
     return VAI
 

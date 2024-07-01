@@ -7,8 +7,10 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /usr/app
 
 RUN pip install -U pip &&\
-    pip install scikit-learn pandas psycopg2-binary
+    pip install pandas psycopg2-binary python-dotenv
 
 COPY traveller_data_insertion.py traveller_data_insertion.py
+COPY .env .env
+COPY Data/ Data/
 
 ENTRYPOINT ["python", "traveller_data_insertion.py"]
