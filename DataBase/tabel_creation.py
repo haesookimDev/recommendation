@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 import os
 
 HOST_URL = os.environ.get('HOST_URL')
-USERNAME = os.environ.get('USERNAME')
-USERPASSWORD = os.environ.get('USERPASSWORD')
-DBNAME = os.environ.get('DBNAME')
+USERNAME = os.environ.get('POSTGRES_USER')
+USERPASSWORD = os.environ.get('POSTGRES_PASSWORD')
+DBNAME = os.environ.get('POSTGRES_DB')
 PORT = os.environ.get('PORT')
 
 db_connect = psycopg2.connect(

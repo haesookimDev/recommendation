@@ -16,7 +16,6 @@ PORT = os.getenv('PORT')
 def get_data():
     VAI = pd.read_csv("Data/Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
     
-
     return VAI
 
 def split_YMD(x: str)->int:
