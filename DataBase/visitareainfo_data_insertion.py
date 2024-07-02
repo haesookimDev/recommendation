@@ -13,6 +13,35 @@ USERPASSWORD = os.getenv('POSTGRES_PASSWORD')
 DBNAME = os.getenv('POSTGRES_DB')
 PORT = os.getenv('PORT')
 
+def create_table(db_connect):
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS visit_area_info (
+        id SERIAL PRIMARY KEY,
+        TRAVEL_ID CHAR(9),
+        VISIT_ORDER NUMERIC(2),
+        VISIT_AREA_ID NUMERIC(10),
+        VISIT_AREA_NM text,
+        VISIT_START_Y NUMERIC(4),
+        VISIT_START_M NUMERIC(2),
+        VISIT_START_D NUMERIC(2),
+        ROAD_NM_ADDR text,
+        LOTNO_ADDR text,
+        S_ADDR text,
+        G_ADDR text,
+        X_COORD NUMERIC(9,6),
+        Y_COORD NUMERIC(8,6),
+        VISIT_AREA_TYPE_CD NUMERIC(2),
+        VISIT_CHC_REASON_CD NUMERIC(2),
+        DGSTFN NUMERIC(1),
+        REVISIT_INTENTION NUMERIC(1),
+        RCMDTN_INTENTION NUMERIC(1)
+    );
+    """
+    print("create_table_query")
+    with db_connect.cursor() as cur:
+        cur.execute(create_table_query)
+        db_connect.commit()
+
 def get_data():
     VAI = pd.read_csv("Data/Central/TL_csv/tn_visit_area_info_방문지정보_A.csv")
     
@@ -49,9 +78,8 @@ def preprocessing(VAI):
 def insert_data(db_connect, PRE_VAI):
 
     insert_row_query = f"""
-    INSERT INTO visit_area_info
-        (TRAVEL_ID, 
-        VISIT_ORDER,
+    INSERT INTO visit_area_info (TRAVEL_ID, 
+    VISIT_ORDER,
         VISIT_AREA_ID,
         VISIT_AREA_NM,
         VISIT_START_Y,
@@ -108,6 +136,8 @@ if __name__ == "__main__":
         port=PORT,
         database=DBNAME,
     )
+    create_table(db_connect)
+
     VAI = get_data()
 
     PRE_VAI = preprocessing(VAI)

@@ -37,6 +37,70 @@ TP_CD_DICT = {0 : 'None',
                   27 : 'ECO', 
                   28 : 'HIKING'}
 
+def create_table(db_connect):
+    create_table_query = """
+    CREATE TABLE IF NOT EXISTS traveller (
+        id SERIAL PRIMARY KEY,
+        TRAVELER_ID CHAR(7),
+        GENDER CHAR(1),
+        AGE_GRP NUMERIC(3),
+        TRAVEL_LIKE_SIDO_1 NUMERIC(2),
+        TRAVEL_LIKE_SGG_1 NUMERIC(5),
+        TRAVEL_LIKE_SIDO_2 NUMERIC(2),
+        TRAVEL_LIKE_SGG_2 NUMERIC(5),
+        TRAVEL_LIKE_SIDO_3 NUMERIC(2),
+        TRAVEL_LIKE_SGG_3 NUMERIC(5),
+        TRAVEL_STYL_1 NUMERIC(1),
+        TRAVEL_STYL_2 NUMERIC(1),
+        TRAVEL_STYL_3 NUMERIC(1),
+        TRAVEL_STYL_4 NUMERIC(1),
+        TRAVEL_STYL_5 NUMERIC(1),
+        TRAVEL_STYL_6 NUMERIC(1),
+        TRAVEL_STYL_7 NUMERIC(1),
+        TRAVEL_STYL_8 NUMERIC(1),
+        TRAVEL_STATUS_DESTINATION VARCHAR(4),
+        TRAVEL_MOTIVE_1 NUMERIC(10),
+        TRAVEL_MOTIVE_2 NUMERIC(10),
+        TRAVEL_MOTIVE_3 NUMERIC(10)
+    );
+    CREATE TABLE IF NOT EXISTS travel (
+        id SERIAL PRIMARY KEY,
+        TRAVELER_ID CHAR(7),
+        TRAVEL_ID CHAR(9),
+        TRAVEL_PERIOD NUMERIC(2)
+    );
+    CREATE TABLE IF NOT EXISTS travel_purpose (
+        id SERIAL PRIMARY KEY,
+        TRAVEL_ID CHAR(9),
+        SHOPPING NUMERIC(1),
+        PARK NUMERIC(1),
+        HISTORY NUMERIC(1),
+        TOUR NUMERIC(1),
+        SPORTS NUMERIC(1),
+        ARTS NUMERIC(1),
+        PLAY NUMERIC(1),
+        CAMPING NUMERIC(1),
+        FESTIVAL NUMERIC(1),
+        SPA NUMERIC(1),
+        EDUCATION NUMERIC(1),
+        DRAMA NUMERIC(1),
+        PILGRIMAGE NUMERIC(1),
+        WELL NUMERIC(1),
+        SNS NUMERIC(1),
+        HOTEL NUMERIC(1),
+        NEWPLACE NUMERIC(1),
+        WITHPET NUMERIC(1),
+        MIMIC NUMERIC(1),
+        ECO NUMERIC(1),
+        HIKING NUMERIC(1),
+        None NUMERIC(1)
+    );
+    """
+    print("create_table_query")
+    with db_connect.cursor() as cur:
+        cur.execute(create_table_query)
+        db_connect.commit()
+
 def get_data():
     TMA = pd.read_csv("Data/Central/TL_csv/tn_traveller_master_여행객_Master_A.csv")
     TA = pd.read_csv("Data/Central/TL_csv/tn_travel_여행_A.csv")
@@ -117,8 +181,7 @@ def insert_data(db_connect, PRE_TMA, PRE_TA):
             TP_DICT['None']=1
 
     insert_row_query = f"""
-    INSERT INTO traveller
-        (TRAVELER_ID,
+    INSERT INTO traveller (TRAVELER_ID,
         GENDER, 
         AGE_GRP, 
         TRAVEL_LIKE_SIDO_1, 
@@ -161,15 +224,13 @@ def insert_data(db_connect, PRE_TMA, PRE_TA):
             {int(PRE_TMA.TRAVEL_MOTIVE_1)},
             {int(PRE_TMA.TRAVEL_MOTIVE_2)},
             {int(PRE_TMA.TRAVEL_MOTIVE_3)});
-    INSERT INTO travel
-        (TRAVELER_ID, TRAVEL_ID, TRAVEL_PERIOD)
+    INSERT INTO travel (TRAVELER_ID, TRAVEL_ID, TRAVEL_PERIOD)
         VALUES (
             '{PRE_TA.TRAVELER_ID}',
             '{PRE_TA.TRAVEL_ID}',
             {int(PRE_TA.TRAVEL_PERIOD)}
         );
-    INSERT INTO travel_purpose
-        (TRAVEL_ID, 
+    INSERT INTO travel_purpose (TRAVEL_ID, 
         SHOPPING, 
         PARK, 
         HISTORY,
@@ -218,10 +279,10 @@ def insert_data(db_connect, PRE_TMA, PRE_TA):
             {TP_DICT['None']}
         );
         """
-    print("insert_row_query")
     with db_connect.cursor() as cur:
         cur.execute(insert_row_query)
         db_connect.commit()
+        print("insert_row_query")
 
 def generate_data(db_connect, PRE_TMA, PRE_TA):
     while True:
@@ -236,6 +297,8 @@ if __name__ == "__main__":
         port=PORT,
         database=DBNAME,
     )
+
+    create_table(db_connect)
     TMA, TA = get_data()
     PRE_TMA, PRE_TA = preprocessing(TMA, TA)
 

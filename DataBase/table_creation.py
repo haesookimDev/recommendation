@@ -4,7 +4,7 @@ import os
 
 load_dotenv()
 
-HOST_URL = os.getenv('HOST_URL')
+HOST_URL = os.getenv('DB_CONTAINER_HOST')
 USERNAME = os.getenv('POSTGRES_USER')
 USERPASSWORD = os.getenv('POSTGRES_PASSWORD')
 DBNAME = os.getenv('POSTGRES_DB')

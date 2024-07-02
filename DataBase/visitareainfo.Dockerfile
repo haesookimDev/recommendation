@@ -13,5 +13,4 @@ COPY visitareainfo_data_insertion.py visitareainfo_data_insertion.py
 COPY .env .env
 COPY Data/ Data/
 
-
 ENTRYPOINT ["python", "visitareainfo_data_insertion.py"]
