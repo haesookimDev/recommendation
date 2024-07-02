@@ -14,6 +14,29 @@ USERPASSWORD = os.getenv('POSTGRES_PASSWORD')
 DBNAME = os.getenv('POSTGRES_DB')
 PORT = os.getenv('PORT')
 
+TP_CD_DICT = {0 : 'None',
+              1 : 'SHOPPING', 
+                  2 : 'PARK', 
+                  3 : 'HISTORY', 
+                  4 : 'TOUR', 
+                  5 : 'SPORTS', 
+                  6 : 'ARTS', 
+                  7 : 'PLAY',
+                  8 : 'CAMPING', 
+                  9 : 'FESTIVAL', 
+                  10 : 'SPA', 
+                  11 : 'EDUCATION', 
+                  12 : 'DRAMA', 
+                  13 : 'PILGRIMAGE', 
+                  21 : 'WELL', 
+                  22 : 'SNS', 
+                  23 : 'HOTEL', 
+                  24 : 'NEWPLACE', 
+                  25 : 'WITHPET', 
+                  26 : 'MIMIC', 
+                  27 : 'ECO', 
+                  28 : 'HIKING'}
+
 def get_data():
     TMA = pd.read_csv("Data/Central/TL_csv/tn_traveller_master_여행객_Master_A.csv")
     TA = pd.read_csv("Data/Central/TL_csv/tn_travel_여행_A.csv")
@@ -31,6 +54,37 @@ def tripdaycheck(x: str)->int:
     return diff.days+1
 
 def preprocessing(TMA, TA):
+
+    PRE_TMA = TMA[['TRAVELER_ID',
+                   'GENDER',
+                   'AGE_GRP',
+                   'TRAVEL_LIKE_SIDO_1',
+                   'TRAVEL_LIKE_SGG_1',
+                   'TRAVEL_LIKE_SIDO_2',
+                   'TRAVEL_LIKE_SGG_2',
+                   'TRAVEL_LIKE_SIDO_3',
+                   'TRAVEL_LIKE_SGG_3',
+                   'TRAVEL_STYL_1',
+                   'TRAVEL_STYL_2',
+                   'TRAVEL_STYL_3', 
+                   'TRAVEL_STYL_4', 
+                   'TRAVEL_STYL_5', 
+                   'TRAVEL_STYL_6', 
+                   'TRAVEL_STYL_7', 
+                   'TRAVEL_STYL_8', 
+                   'TRAVEL_STATUS_DESTINATION', 
+                   'TRAVEL_MOTIVE_1', 
+                   'TRAVEL_MOTIVE_2', 
+                   'TRAVEL_MOTIVE_3']].copy()
+    
+    PRE_TA = TA[['TRAVELER_ID', 'TRAVEL_ID', 'TRAVEL_PURPOSE']].copy()
+
+    PRE_TA['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
+    
+    return PRE_TMA.fillna(0), PRE_TA.fillna(0)
+
+def insert_data(db_connect, PRE_TMA, PRE_TA):
+
     TP_DICT = {'TRAVEL_ID': '', 
                'SHOPPING': 0, 
                'PARK': 0, 
@@ -53,147 +107,93 @@ def preprocessing(TMA, TA):
                'MIMIC': 0, 
                'ECO': 0, 
                'HIKING': 0}
-    
-    TP_CD_DICT = {1 : 'SHOPPING', 
-                  2 : 'PARK', 
-                  3 : 'HISTORY', 
-                  4 : 'TOUR', 
-                  5 : 'SPORTS', 
-                  6 : 'ARTS', 
-                  7 : 'PLAY',
-                  8 : 'CAMPING', 
-                  9 : 'FESTIVAL', 
-                  10 : 'SPA', 
-                  11 : 'EDUCATION', 
-                  12 : 'DRAMA', 
-                  13 : 'PILGRIMAGE', 
-                  21 : 'WELL', 
-                  22 : 'SNS', 
-                  23 : 'HOTEL', 
-                  24 : 'NEWPLACE', 
-                  25 : 'WITHPET', 
-                  26 : 'MIMIC', 
-                  27 : 'ECO', 
-                  28 : 'HIKING'}
-    
 
-    PRE_TMA = TMA[['TRAVELER_ID',
-                   'GENDER',
-                   'AGE_GRP',
-                   'TRAVEL_LIKE_SIDO_1',
-                   'TRAVEL_LIKE_SGG_1',
-                   'TRAVEL_LIKE_SIDO_2',
-                   'TRAVEL_LIKE_SGG_2',
-                   'TRAVEL_LIKE_SIDO_3',
-                   'TRAVEL_LIKE_SGG_3',
-                   'TRAVEL_STYL_1',
-                   'TRAVEL_STYL_2',
-                   'TRAVEL_STYL_3', 
-                   'TRAVEL_STYL_4', 
-                   'TRAVEL_STYL_5', 
-                   'TRAVEL_STYL_6', 
-                   'TRAVEL_STYL_7', 
-                   'TRAVEL_STYL_8', 
-                   'TRAVEL_STATUS_DESTINATION', 
-                   'TRAVEL_MOTIVE_1', 
-                   'TRAVEL_MOTIVE_2', 
-                   'TRAVEL_MOTIVE_3']]
-    
-    PRE_TA = TA[['TRAVELER_ID', 'TRAVEL_ID']]
+    TP_STRING = PRE_TA['TRAVEL_PURPOSE'].split(';')
 
-    PRE_TA.loc['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
-
-    for i in TA['TRAVEL_PURPOSE']:
-        TP_STRING=i.split(';')
-        
-    TP_DICT['TRAVEL_ID'] = PRE_TA['TRAVEL_ID']
     for i in TP_STRING:
         if i.isdigit():
             TP_DICT[TP_CD_DICT[int(i)]]=1
-    
-    print(TP_DICT['TRAVEL_ID'])
-    
-    return PRE_TMA, PRE_TA, TP_DICT
-
-def insert_data(db_connect, PRE_TMA, PRE_TA, TP_DICT):
+        else:
+            TP_DICT['None']=1
 
     insert_row_query = f"""
     INSERT INTO traveller
-        ('TRAVELER_ID', 
-        'GENDER', 
-        'AGE_GRP', 
-        'TRAVEL_LIKE_SIDO_1',
-        'TRAVEL_LIKE_SGG_1',
-        'TRAVEL_LIKE_SIDO_2',
-        'TRAVEL_LIKE_SGG_2',
-        'TRAVEL_LIKE_SIDO_3',
-        'TRAVEL_LIKE_SGG_3',
-        'TRAVEL_STYL_1',
-        'TRAVEL_STYL_2',
-        'TRAVEL_STYL_3', 
-        'TRAVEL_STYL_4', 
-        'TRAVEL_STYL_5', 
-        'TRAVEL_STYL_6', 
-        'TRAVEL_STYL_7', 
-        'TRAVEL_STYL_8', 
-        'TRAVEL_STATUS_DESTINATION', 
-        'TRAVEL_MOTIVE_1', 
-        'TRAVEL_MOTIVE_2', 
-        'TRAVEL_MOTIVE_3')
+        (TRAVELER_ID,
+        GENDER, 
+        AGE_GRP, 
+        TRAVEL_LIKE_SIDO_1, 
+        TRAVEL_LIKE_SGG_1, 
+        TRAVEL_LIKE_SIDO_2, 
+        TRAVEL_LIKE_SGG_2,
+        TRAVEL_LIKE_SIDO_3,
+        TRAVEL_LIKE_SGG_3,
+        TRAVEL_STYL_1,
+        TRAVEL_STYL_2,
+        TRAVEL_STYL_3, 
+        TRAVEL_STYL_4, 
+        TRAVEL_STYL_5, 
+        TRAVEL_STYL_6, 
+        TRAVEL_STYL_7, 
+        TRAVEL_STYL_8, 
+        TRAVEL_STATUS_DESTINATION, 
+        TRAVEL_MOTIVE_1, 
+        TRAVEL_MOTIVE_2, 
+        TRAVEL_MOTIVE_3)
         VALUES (
-            {PRE_TMA.TRAVELER_ID},
-            {PRE_TMA.GENDER},
-            {PRE_TMA.TRAVEL_LIKE_SIDO_1},
-            {PRE_TMA.TRAVEL_LIKE_SGG_1},
-            {PRE_TMA.TRAVEL_LIKE_SIDO_2},
-            {PRE_TMA.TRAVEL_LIKE_SGG_2},
-            {PRE_TMA.TRAVEL_LIKE_SIDO_3},
-            {PRE_TMA.TRAVEL_LIKE_SGG_3},
-            {PRE_TMA.TRAVEL_STYL_1},
-            {PRE_TMA.TRAVEL_STYL_2},
-            {PRE_TMA.TRAVEL_STYL_3},
-            {PRE_TMA.TRAVEL_STYL_4},
-            {PRE_TMA.TRAVEL_STYL_5},
-            {PRE_TMA.TRAVEL_STYL_6},
-            {PRE_TMA.TRAVEL_STYL_7},
-            {PRE_TMA.TRAVEL_STYL_8},
-            {PRE_TMA.TRAVEL_STATUS_DESTINATION},
-            {PRE_TMA.TRAVEL_MOTIVE_1},
-            {PRE_TMA.TRAVEL_MOTIVE_2},
-            {PRE_TMA.TRAVEL_MOTIVE_3},
-        );
+            '{PRE_TMA.TRAVELER_ID}',
+            '{PRE_TMA.GENDER}',
+            {int(PRE_TMA.AGE_GRP)},
+            {int(PRE_TMA.TRAVEL_LIKE_SIDO_1)},
+            {int(PRE_TMA.TRAVEL_LIKE_SGG_1)},
+            {int(PRE_TMA.TRAVEL_LIKE_SIDO_2)},
+            {int(PRE_TMA.TRAVEL_LIKE_SGG_2)},
+            {int(PRE_TMA.TRAVEL_LIKE_SIDO_3)},
+            {int(PRE_TMA.TRAVEL_LIKE_SGG_3)},
+            {int(PRE_TMA.TRAVEL_STYL_1)},
+            {int(PRE_TMA.TRAVEL_STYL_2)},
+            {int(PRE_TMA.TRAVEL_STYL_3)},
+            {int(PRE_TMA.TRAVEL_STYL_4)},
+            {int(PRE_TMA.TRAVEL_STYL_5)},
+            {int(PRE_TMA.TRAVEL_STYL_6)},
+            {int(PRE_TMA.TRAVEL_STYL_7)},
+            {int(PRE_TMA.TRAVEL_STYL_8)},
+            '{PRE_TMA.TRAVEL_STATUS_DESTINATION}',
+            {int(PRE_TMA.TRAVEL_MOTIVE_1)},
+            {int(PRE_TMA.TRAVEL_MOTIVE_2)},
+            {int(PRE_TMA.TRAVEL_MOTIVE_3)});
     INSERT INTO travel
-        ('TRAVELER_ID', 'TRAVEL_ID', 'TRAVEL_PERIOD')
+        (TRAVELER_ID, TRAVEL_ID, TRAVEL_PERIOD)
         VALUES (
-            {PRE_TA.TRAVELER_ID},
-            {PRE_TA.TRAVEL_ID},
-            {PRE_TA.TRAVEL_PERIOD},
+            '{PRE_TA.TRAVELER_ID}',
+            '{PRE_TA.TRAVEL_ID}',
+            {int(PRE_TA.TRAVEL_PERIOD)}
         );
-    INSERT INTO travel
-        ('TRAVEL_ID', 
-        'SHOPPING', 
-        'PARK', 
-        'HISTORY',
-        'TOUR', 
-        'SPORTS', 
-        'ARTS', 
-        'PLAY',
-        'CAMPING', 
-        'FESTIVAL', 
-        'SPA', 
-        'EDUCATION', 
-        'DRAMA', 
-        'PILGRIMAGE', 
-        'WELL', 
-        'SNS', 
-        'HOTEL', 
-        'NEWPLACE', 
-        'WITHPET', 
-        'MIMIC', 
-        'ECO', 
-        'HIKING')
+    INSERT INTO travel_purpose
+        (TRAVEL_ID, 
+        SHOPPING, 
+        PARK, 
+        HISTORY,
+        TOUR, 
+        SPORTS, 
+        ARTS, 
+        PLAY,
+        CAMPING, 
+        FESTIVAL, 
+        SPA, 
+        EDUCATION, 
+        DRAMA, 
+        PILGRIMAGE, 
+        WELL, 
+        SNS, 
+        HOTEL, 
+        NEWPLACE, 
+        WITHPET, 
+        MIMIC, 
+        ECO, 
+        HIKING,
+        None)
         VALUES (
-            {TP_DICT['TRAVELER_ID']},
+            '{PRE_TA.TRAVELER_ID}',
             {TP_DICT['SHOPPING']},
             {TP_DICT['PARK']},
             {TP_DICT['HISTORY']},
@@ -215,16 +215,17 @@ def insert_data(db_connect, PRE_TMA, PRE_TA, TP_DICT):
             {TP_DICT['MIMIC']},
             {TP_DICT['ECO']},
             {TP_DICT['HIKING']},
-        );  
+            {TP_DICT['None']}
+        );
         """
     print("insert_row_query")
     with db_connect.cursor() as cur:
         cur.execute(insert_row_query)
         db_connect.commit()
 
-def generate_data(db_connect, df):
+def generate_data(db_connect, PRE_TMA, PRE_TA):
     while True:
-        insert_data(db_connect, df.sample(1).squeeze())
+        insert_data(db_connect, PRE_TMA.sample(1).squeeze(), PRE_TA.sample(1).squeeze())
         time.sleep(1)
 
 if __name__ == "__main__":
@@ -236,6 +237,6 @@ if __name__ == "__main__":
         database=DBNAME,
     )
     TMA, TA = get_data()
-    PRE_TMA, PRE_TA, TP_DICT = preprocessing(TMA, TA)
+    PRE_TMA, PRE_TA = preprocessing(TMA, TA)
 
-    generate_data(db_connect, PRE_TMA, PRE_TA, TP_DICT)
+    generate_data(db_connect, PRE_TMA, PRE_TA)
