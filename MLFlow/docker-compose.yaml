@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: "${MLFLOW_USER}"
       POSTGRES_PASSWORD: "${MLFLOW_PASSWORD}"
       POSTGRES_DB: "${MLFLOW_DB}"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-U", "mlflowuser", "-d", "mlflowdatabase"]
       interval: 10s
@@ -25,6 +27,8 @@ services:
     environment:
       MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
       MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+    volumes:
+      - ./minio_data:/data
     command: server /data/minio --console-address :9001
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
@@ -58,3 +62,7 @@ services:
         --backend-store-uri postgresql://${MLFLOW_USER}:${MLFLOW_PASSWORD}@mlflow-backend-store/mlflowdatabase \
         --default-artifact-root s3://mlflow/ \
         --host 0.0.0.0
+
+volumes:
+    minio_data:
+    db_data:
