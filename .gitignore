@@ -1,3 +1,10 @@
 DataBase/.env
 DataBase/Data/
+DataBase/db_data
 MLFlow/.env
+MLFlow/db_data
+MLFlow/minio_data
+Recommender/.env
+Recommender/__pycache__
+Preprocessing/code
+Preprocessing/__pycache__
