@@ -10,13 +10,13 @@ services:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DB: "${POSTGRES_DB}"
+    volumes:
+      - ./db_data:/var/lib/postgresql/data/
     healthcheck:
       test: ["CMD", "pg_isready", "-q", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - "../../backup:/var/lib/postgresql"
 
   tarveller-data-generator:
     build:
@@ -37,6 +37,9 @@ services:
       postgres-server:
         condition: service_healthy
     command: ["postgres-server"]
+
+volumes:
+    db_data:
 
 networks:
   default:
