@@ -100,7 +100,7 @@ def insert_data(db_connect, PRE_VAI):
             '{PRE_VAI.TRAVEL_ID}',
             {int(PRE_VAI.VISIT_ORDER)},
             {int(PRE_VAI.VISIT_AREA_ID)},
-            '{PRE_VAI.VISIT_AREA_NM}',
+            "{PRE_VAI.VISIT_AREA_NM}",
             {int(PRE_VAI.YMD[0])},
             {int(PRE_VAI.YMD[1])},
             {int(PRE_VAI.YMD[2])},
