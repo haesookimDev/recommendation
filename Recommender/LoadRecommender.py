@@ -53,10 +53,11 @@ print("Data Loading")
 data = dataloader.load(PRE_TMA, PRE_TA, PRE_VAI)
 
 model.eval()
-out = model(data.x, data.edge_index)
+with torch.no_grad():
+    out = model(data.x, data.edge_index)
 
-loss_fn = nn.MSELoss()
+    loss_fn = nn.MSELoss()
 
-loss = loss_fn(out[data.mask], data.y[data.mask])
+    loss = loss_fn(out[data.mask], data.y[data.mask])
 
 print("loss :", loss)
