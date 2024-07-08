@@ -66,7 +66,7 @@ epochs = 300
 
 model = TravelRecommendationGNN(num_features, hidden_channels, num_classes)
 
-loss_fn = nn.CrossEntropyLoss()
+loss_fn = nn.MSELoss()
 metric_fn = Accuracy(task="multiclass", num_classes=num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
@@ -111,7 +111,7 @@ with mlflow.start_run():
         f.write(str(summary(model)))
     mlflow.log_artifact("model_summary.txt", artifact_path="model_summary")
 
-    train_model(model, data, loss_fn, metric_fn, optimizer, epochs)  
+    train_model(model, data, loss_fn, metric_fn, optimizer, epochs)
 
     # Save the trained model to MLflow.
     mlflow.pytorch.log_model(model, "model", signature=signature, input_example=input_sample)
