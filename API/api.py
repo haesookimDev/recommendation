@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 import mlflow
 import pandas as pd
@@ -17,7 +18,7 @@ app = FastAPI()
 
 @app.post("/predict", response_model=PredictOut)
 def predict(data: PredictIn) -> PredictOut:
-    df = pd.DataFrame([data.dict()])
+    
     MODEL.eval()
     with torch.no_grad():
         out = MODEL(data.x, data.edge_index)
@@ -25,7 +26,6 @@ def predict(data: PredictIn) -> PredictOut:
         trip_embedding = out[len(travelers) + trip_id]
 
         # 모든 여행지와의 유사도 계산
-        destination_start_idx = len(travelers) + len(trips)
         destination_embeddings = out[data.mask]
         similarities = F.cosine_similarity(traveler_embedding + trip_embedding, destination_embeddings)
 
