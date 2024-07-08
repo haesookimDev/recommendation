@@ -53,6 +53,7 @@ class PreprocessingRawData():
         print("Encoding Data")
 
         PRE_TA['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
+        PRE_TA = pd.concat([PRE_TA, pd.DataFrame(data=TA['VISIT_START_YMD'].apply(split_YMD).tolist(), columns=['Y','M','D'])], axis=1)
         PRE_TMA['GENDER'] = PRE_TMA['GENDER'].apply(encoding_gender)
         PRE_TMA['TRAVEL_STATUS_DESTINATION'] = PRE_TMA['TRAVEL_STATUS_DESTINATION'].apply(encoding_destination)
 

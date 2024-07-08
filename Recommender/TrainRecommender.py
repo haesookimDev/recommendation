@@ -3,14 +3,10 @@ import numpy as np
 from datetime import datetime
 import os, sys
 
-from sklearn.preprocessing import LabelEncoder
-
 from model_GNN import TravelRecommendationGNN
-from Data_processing import DataProcessing
+from Data_fetch_and_load import DataFetchandLoad
 
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from Preprocessing.PreprocessingTravelLog import PreprocessingRawData
+from EmbeddingCache import EmbeddingCache
 
 import torch
 import torch.nn as nn
@@ -39,23 +35,14 @@ TMA = pd.read_csv(PATH_DATA+'tn_traveller_master_여행객_Master_A.csv')
 TA = pd.read_csv(PATH_DATA+'tn_travel_여행_A.csv')
 VAI = pd.read_csv(PATH_DATA+'tn_visit_area_info_방문지정보_A.csv')
 
-preprocessingRawData = PreprocessingRawData()
+dataloader = DataFetchandLoad(TMA, TA, VAI)
 
-PRE_TMA, PRE_TA, PRE_VAI = preprocessingRawData.preprocessing(TMA, TA, VAI)
-
-PRE_TMA.reset_index(drop=True, inplace=True)
-PRE_TA.reset_index(drop=True, inplace=True)
-PRE_VAI.reset_index(drop=True, inplace=True)
-
-data_processing = DataProcessing()
+PRE_TMA, PRE_TA, PRE_VAI = dataloader.fetch()
 
 # 데이터 로드
 print("Data Loading")
-travelers = PRE_TMA  # 여행자 데이터
-trips = PRE_TA  # 여행 데이터
-destinations = PRE_VAI  # 여행지 데이터
 
-data = data_processing.prepare_data(travelers, trips, destinations)
+data = dataloader.load(PRE_TMA, PRE_TA, PRE_VAI)
 
 #모델 하이퍼파라미터
 print("Prepare Model")
@@ -65,6 +52,7 @@ num_classes = 3  # 평점, 추천 점수, 재방문 의향 점수
 epochs = 300
 
 model = TravelRecommendationGNN(num_features, hidden_channels, num_classes)
+embedding_cache = EmbeddingCache()
 
 loss_fn = nn.MSELoss()
 metric_fn = Accuracy(task="multiclass", num_classes=num_classes).to(device)
@@ -75,7 +63,7 @@ def train_model(model, data, loss_fn, metrics_fn, optimizer, epochs=200):
     model.train()
     for epoch in range(epochs):
         optimizer.zero_grad()
-        out = model(data.x, data.edge_index)
+        _, out = model(data.x, data.edge_index)
 
 
         loss = loss_fn(out[data.mask], data.y[data.mask])
@@ -87,6 +75,10 @@ def train_model(model, data, loss_fn, metrics_fn, optimizer, epochs=200):
             mlflow.log_metric("loss", f"{loss:3f}", step=((epoch + 1) // 10))
             mlflow.log_metric("accuracy", f"{accuracy:3f}", step=((epoch + 1) // 10))
             print(f'Epoch {epoch+1:03d}, Loss: {loss.item():.4f}, Accuracy: {accuracy:3f}')
+        model.eval()
+        with torch.no_grad():
+            embeddings, _ = model(data.x, data.edge_index)
+        embedding_cache.set('embeddings', embeddings)
 
 print("Start Train Model")
 

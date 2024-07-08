@@ -54,10 +54,10 @@ data = dataloader.load(PRE_TMA, PRE_TA, PRE_VAI)
 
 model.eval()
 with torch.no_grad():
-    out = model(data.x, data.edge_index)
+    _, out = model(data.x, data.edge_index)
 
     loss_fn = nn.MSELoss()
 
     loss = loss_fn(out[data.mask], data.y[data.mask])
-
+    
 print("loss :", loss)

@@ -18,6 +18,9 @@ class DataProcessing():
 
         trip_features = torch.tensor([
             [t['TRAVEL_PERIOD'],
+             t['Y'],
+             t['M'],
+             t['D'],
             t['SHOPPING'],
             t['PARK'],
             t['HISTORY'],
