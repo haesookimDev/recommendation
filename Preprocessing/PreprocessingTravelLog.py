@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
+from sklearn.decomposition import PCA
 
 class PreprocessingRawData():
     def preprocessing(self, TMA, TA, VAI):
@@ -79,6 +80,10 @@ class PreprocessingRawData():
             (PRE_VAI['S']==0)|
             (PRE_VAI['G']==0)
             ].index)
+        
+        print("Prepare Data before Using for Model")
+        PRE_TMA['TRAVEL_STYL'] = reduce_feature(PRE_TMA[['TRAVEL_STYL_1', 'TRAVEL_STYL_2', 'TRAVEL_STYL_3', 'TRAVEL_STYL_4', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7', 'TRAVEL_STYL_8']])
+        PRE_TMA['TRAVEL_MOTIVE'] = reduce_feature(PRE_TMA[['TRAVEL_MOTIVE_1', 'TRAVEL_MOTIVE_2', 'TRAVEL_MOTIVE_3']])
 
 
         return PRE_TMA.fillna(0), PRE_TA.fillna(0), PRE_VAI.fillna(0)
@@ -259,3 +264,9 @@ def encoding_gender(x: str)->int:
 
 def encoding_destination(x: str)->int:
   return dest_map[x]
+
+def reduce_feature(data):
+    pca = PCA(n_components=1)
+    reduced_data = pca.fit_transform(data)
+
+    return reduced_data

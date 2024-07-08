@@ -1,13 +1,10 @@
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data, DataLoader
-from sklearn.decomposition import PCA
+
 
 class DataProcessing():
     def prepare_data(self, travelers, trips, destinations):
-        print("Prepare Data before Using for Model")
-        travelers['TRAVEL_STYL'] = reduce_feature(travelers[['TRAVEL_STYL_1', 'TRAVEL_STYL_2', 'TRAVEL_STYL_3', 'TRAVEL_STYL_4', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7', 'TRAVEL_STYL_8']])
-        travelers['TRAVEL_MOTIVE'] = reduce_feature(travelers[['TRAVEL_MOTIVE_1', 'TRAVEL_MOTIVE_2', 'TRAVEL_MOTIVE_3']])
 
         # 노드 특성 준비
         print("Prepare Feature")
@@ -131,9 +128,3 @@ def create_edge_index(travelers, trips, destinations):
             continue
 
     return torch.tensor(edges).t().contiguous()
-
-def reduce_feature(data):
-    pca = PCA(n_components=1)
-    reduced_data = pca.fit_transform(data)
-
-    return reduced_data

@@ -3,64 +3,36 @@ import numpy as np
 import pandas as pd
 
 class ComputeSimilarity():
-    def __init__(self,
-                GENDER: int,
-                AGE_GRP: int,
-                TRAVEL_STATUS_DESTINATION: int,
-                M: int,
-                TRAVEL_STYL: int,
-                TRAVEL_MOTIVE:int,
-                TRAVEL_PERIOD: int,
-                SHOPPING: int,
-                PARK: int,
-                HISTORY: int,
-                TOUR: int,
-                SPORTS: int,
-                ARTS: int,
-                PLAY: int,
-                CAMPING: int,
-                FESTIVAL: int,
-                SPA: int,
-                EDUCATION: int,
-                DRAMA: int,
-                PILGRIMAGE: int,
-                WELL: int,
-                SNS: int,
-                HOTEL: int,
-                NEWPLACE: int,
-                WITHPET: int,
-                MIMIC: int,
-                ECO: int,
-                HIKING: int):
+    def __init__(self, df):
         super.__init__
-        self.GENDER = GENDER
-        self.AGE_GRP = AGE_GRP
-        self.M = M
-        self.TRAVEL_STATUS_DESTINATION = TRAVEL_STATUS_DESTINATION
-        self.TRAVEL_STYL = TRAVEL_STYL
-        self.TRAVEL_MOTIVE = TRAVEL_MOTIVE
-        self.TRAVEL_PERIOD = TRAVEL_PERIOD
-        self.SHOPPING = SHOPPING
-        self.PARK = PARK
-        self.HISTORY = HISTORY
-        self.TOUR = TOUR
-        self.SPORTS = SPORTS
-        self.ARTS = ARTS
-        self.PLAY = PLAY
-        self.CAMPING = CAMPING
-        self.FESTIVAL = FESTIVAL
-        self.SPA = SPA
-        self.EDUCATION = EDUCATION
-        self.DRAMA = DRAMA
-        self.PILGRIMAGE = PILGRIMAGE
-        self.WELL = WELL
-        self.SNS = SNS
-        self.HOTEL = HOTEL
-        self.NEWPLACE = NEWPLACE
-        self.WITHPET = WITHPET
-        self.MIMIC = MIMIC
-        self.ECO = ECO
-        self.HIKING = HIKING
+        self.GENDER = df['GENDER']
+        self.AGE_GRP = df['AGE_GRP']
+        self.M = df['M']
+        self.TRAVEL_STATUS_DESTINATION = df['TRAVEL_STATUS_DESTINATION']
+        self.TRAVEL_STYL = df['TRAVEL_STYL']
+        self.TRAVEL_MOTIVE = df['TRAVEL_MOTIVE']
+        self.TRAVEL_PERIOD = df['TRAVEL_PERIOD']
+        self.SHOPPING = df['SHOPPING']
+        self.PARK = df['PARK']
+        self.HISTORY = df['HISTORY']
+        self.TOUR = df['TOUR']
+        self.SPORTS = df['SPORTS']
+        self.ARTS = df['ARTS']
+        self.PLAY = df['PLAY']
+        self.CAMPING = df['CAMPING']
+        self.FESTIVAL = df['FESTIVAL']
+        self.SPA = df['SPA']
+        self.EDUCATION = df['EDUCATION']
+        self.DRAMA = df['DRAMA']
+        self.PILGRIMAGE = df['PILGRIMAGE']
+        self.WELL = df['WELL']
+        self.SNS = df['SNS']
+        self.HOTEL = df['HOTEL']
+        self.NEWPLACE = df['NEWPLACE']
+        self.WITHPET = df['WITHPET']
+        self.MIMIC = df['MIMIC']
+        self.ECO = df['ECO']
+        self.HIKING = df['HIKING']
 
     def content_based_similarity(self, all_trips, all_traveler):
         traveler_vector = np.array([self.TRAVEL_STYL, self.TRAVEL_MOTIVE])
@@ -89,8 +61,18 @@ class ComputeSimilarity():
         
         filtered_trip = all_trips.loc[((all_trips['M']==self.M))]
         filtered_trip_indices = filtered_trip.index
-        filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']==self.AGE_GRP)(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
-        filtered_traveler_indices = filtered_traveler.index
+        if self.GENDER!=None&self.AGE_GRP!=None:
+            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']==self.AGE_GRP)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        elif self.GENDER!=None&self.AGE_GRP==None:
+            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        elif self.GENDER==None&self.AGE_GRP!=None:
+            filtered_traveler = all_traveler.loc[(all_traveler['AGE_GRP']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        else:
+            filtered_traveler = all_traveler.loc[(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
 
         all_traveler_vector = np.array([[t['TRAVEL_STYL'], t['TRAVEL_MOTIVE']] for t in filtered_traveler])
         all_trip_vector = np.array([[t['TRAVEL_PERIOD'], 

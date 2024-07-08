@@ -108,3 +108,8 @@ with mlflow.start_run():
     # Save the trained model to MLflow.
     mlflow.pytorch.log_model(model, "model", signature=signature, input_example=input_sample)
 
+    torch.save(embedding_cache.cache, 'embedding_cache.pth')
+    # 임베딩을 numpy 파일로 저장
+
+    # numpy 파일을 MLflow 아티팩트로 로그
+    mlflow.log_artifact('embedding_cache.pth', 'embeddings')
