@@ -18,5 +18,4 @@ class TravelRecommendationGNN(torch.nn.Module):
         x = F.relu(x)
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.conv3(x, edge_index)
-        x = self.linear(x)
         return x, self.linear(x)
