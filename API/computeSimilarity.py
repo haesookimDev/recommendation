@@ -34,8 +34,33 @@ class ComputeSimilarity():
         self.ECO = df['ECO']
         self.HIKING = df['HIKING']
 
-    def content_based_similarity(self, all_trips, all_traveler):
+    def content_based_similarity_traveler(self, all_traveler):
         traveler_vector = np.array([self.TRAVEL_STYL, self.TRAVEL_MOTIVE])
+        
+        if self.GENDER!=None&self.AGE_GRP!=None:
+            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']==self.AGE_GRP)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        elif self.GENDER!=None&self.AGE_GRP==None:
+            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        elif self.GENDER==None&self.AGE_GRP!=None:
+            filtered_traveler = all_traveler.loc[(all_traveler['AGE_GRP']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+        else:
+            filtered_traveler = all_traveler.loc[(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler_indices = filtered_traveler.index
+
+        all_traveler_vector = np.array([[t['TRAVEL_STYL'], t['TRAVEL_MOTIVE']] for t in filtered_traveler])
+        
+        
+        traveler_similar = cosine_similarity([traveler_vector], all_traveler_vector)[0]
+        
+        traveler_idx = np.argmax(traveler_similar)
+        traveler_id = filtered_traveler_indices[traveler_idx]
+
+        return traveler_id
+    
+    def content_based_similarity_trip(self, all_trips):
         trip_vector = np.array([self.TRAVEL_PERIOD, 
                                 self.SHOPPING, 
                                 self.PARK, 
@@ -61,20 +86,7 @@ class ComputeSimilarity():
         
         filtered_trip = all_trips.loc[((all_trips['M']==self.M))]
         filtered_trip_indices = filtered_trip.index
-        if self.GENDER!=None&self.AGE_GRP!=None:
-            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']==self.AGE_GRP)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
-            filtered_traveler_indices = filtered_traveler.index
-        elif self.GENDER!=None&self.AGE_GRP==None:
-            filtered_traveler = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
-            filtered_traveler_indices = filtered_traveler.index
-        elif self.GENDER==None&self.AGE_GRP!=None:
-            filtered_traveler = all_traveler.loc[(all_traveler['AGE_GRP']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
-            filtered_traveler_indices = filtered_traveler.index
-        else:
-            filtered_traveler = all_traveler.loc[(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
-            filtered_traveler_indices = filtered_traveler.index
 
-        all_traveler_vector = np.array([[t['TRAVEL_STYL'], t['TRAVEL_MOTIVE']] for t in filtered_traveler])
         all_trip_vector = np.array([[t['TRAVEL_PERIOD'], 
                                  t['SHOPPING'], 
                                  t['PARK'], 
@@ -98,12 +110,9 @@ class ComputeSimilarity():
                                  t['ECO'], 
                                  t['HIKING']] for t in filtered_trip])
         
-        traveler_similar = cosine_similarity([traveler_vector], all_traveler_vector)[0]
         trip_similar = cosine_similarity([trip_vector], all_trip_vector)[0]
         
-        traveler_idx = np.argmax(traveler_similar)
-        traveler_id = filtered_traveler_indices[traveler_idx]
         trip_idx = np.argmax(trip_similar)
         trip_id = filtered_trip_indices[trip_idx]
 
-        return traveler_id, trip_id
+        return trip_id

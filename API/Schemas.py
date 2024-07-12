@@ -1,13 +1,14 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class PredictIn(BaseModel):
-    traveler_id: int
-    GENDER: int
-    AGE_GRP: int
+    traveler_id: Optional[int] = None
+    GENDER: Optional[int] = None
+    AGE_GRP: Optional[int] = None
     TRAVEL_STATUS_DESTINATION: int
     TRAVEL_STYL: int
     TRAVEL_MOTIVE:int
-    trip_id: int
+    trip_id: Optional[int] = None
     TRAVEL_PERIOD: int
     SHOPPING: int
     PARK: int

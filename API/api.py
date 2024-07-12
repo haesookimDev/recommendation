@@ -1,6 +1,7 @@
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
+from DownloadModel import download_model
 from Recommender.Data_fetch_and_load import DataFetchandLoad
 from Recommender.EmbeddingCache import EmbeddingCache
 from computeSimilarity import ComputeSimilarity
@@ -15,7 +16,13 @@ from fastapi import FastAPI
 from schemas import PredictIn, PredictOut
 
 def get_model():
-    model = mlflow.sklearn.load_model(model_uri="./model")
+    client = mlflow.tracking.MlflowClient()
+    experiment_id = "0"
+    best_run = client.search_runs(
+        experiment_id, order_by=["metrics.loss"], max_results=1
+    )[0]
+    download_model(best_run.run_id, 'model')
+    model = mlflow.pytorch.load_model(model_uri="./model")
     return model
 
 def get_embedding():
@@ -37,6 +44,8 @@ dataloader = DataFetchandLoad(TMA, TA, VAI)
 
 PRE_TMA, PRE_TA, PRE_VAI = dataloader.fetch()
 
+traveler_len = len(PRE_TMA)
+
 embedding_cache = EmbeddingCache()
 embedding_cache.cache = get_embedding()
 
@@ -46,14 +55,19 @@ app = FastAPI()
 @app.post("/predict", response_model=PredictOut)
 def predict(data: PredictIn) -> PredictOut:
     df = pd.DataFrame([data.dict()])
+    traveler_id = df['traveler_id']
+    trip_id = df['trip_id']
     similarities = ComputeSimilarity(df=df)
-    traveler_id, trip_id = similarities.content_based_similarity(PRE_TA, PRE_TMA)
+    if traveler_id==None:
+        traveler_id = similarities.content_based_similarity_traveler(PRE_TMA)
+    if df['trip_id'] != None:
+        trip_id = similarities.content_based_similarity_trip(PRE_TA)
     MODEL.eval()
     with torch.no_grad():
         cached_embeddings = embedding_cache.get('embeddings')
 
         traveler_embedding = MODEL.linear(cached_embeddings[traveler_id])    
-        trip_embedding = MODEL.linear(cached_embeddings[len(PRE_TMA) + trip_id])
+        trip_embedding = MODEL.linear(cached_embeddings[traveler_len + trip_id])
 
         # 모든 여행지와의 유사도 계산
         destination_embeddings = MODEL.linear(cached_embeddings[data.mask])
