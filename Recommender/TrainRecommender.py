@@ -82,7 +82,9 @@ def train_model(model, data, loss_fn, metrics_fn, optimizer, epochs=200):
 
 print("Start Train Model")
 
-signature = mlflow.models.signature.infer_signature(model_input=data.x.detach().numpy(), model_output=model(data.x, data.edge_index).detach().numpy())
+
+
+signature = mlflow.models.signature.infer_signature(model_input=data.x.detach().numpy(), model_output=model(data.x, data.edge_index)[1].detach().numpy())
 input_sample = data.x[:10].detach().numpy()
 
 with mlflow.start_run():

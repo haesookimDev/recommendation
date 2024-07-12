@@ -4,7 +4,7 @@ Layer (type:depth-idx)                   Param #
 TravelRecommendationGNN                  --
 戍式GCNConv: 1-1                           64
 弛    戌式SumAggregation: 2-1               --
-弛    戌式Linear: 2-2                       1,408
+弛    戌式Linear: 2-2                       1,600
 戍式GCNConv: 1-2                           64
 弛    戌式SumAggregation: 2-3               --
 弛    戌式Linear: 2-4                       4,096
@@ -13,7 +13,7 @@ TravelRecommendationGNN                  --
 弛    戌式Linear: 2-6                       4,096
 戍式Linear: 1-4                            195
 =================================================================
-Total params: 9,987
-Trainable params: 9,987
+Total params: 10,179
+Trainable params: 10,179
 Non-trainable params: 0
 =================================================================
