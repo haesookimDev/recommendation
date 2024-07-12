@@ -5,6 +5,9 @@ from sklearn.decomposition import PCA
 
 class PreprocessingRawData():
     def preprocessing(self, TMA, TA, VAI):
+        PRE_TA = pd.DataFrame()
+        PRE_TMA = pd.DataFrame()
+        PRE_VAI = pd.DataFrame()
         print("Preprocessing Raw Data")
         columns=['SHOPPING',
                 'PARK',
@@ -27,7 +30,9 @@ class PreprocessingRawData():
                 'MIMIC',
                 'ECO',
                 'HIKING']
-        PRE_TMA = TMA[['TRAVELER_ID',
+        
+        print("Copying Raw Data")
+        PRE_TMA: pd.DataFrame = TMA[['TRAVELER_ID',
                     'GENDER',
                     'AGE_GRP',
                     'TRAVEL_LIKE_SIDO_1',
@@ -49,22 +54,29 @@ class PreprocessingRawData():
                     'TRAVEL_MOTIVE_2',
                     'TRAVEL_MOTIVE_3']].copy()
 
-        PRE_TA = TA[['TRAVELER_ID', 'TRAVEL_ID', 'TRAVEL_PURPOSE']].copy()
+        PRE_TA: pd.DataFrame = TA[['TRAVELER_ID', 'TRAVEL_ID', 'TRAVEL_PURPOSE']].copy()
 
-        print("Encoding Data")
-
-        PRE_TA['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
-        PRE_TA = pd.concat([PRE_TA, pd.DataFrame(data=TA['VISIT_START_YMD'].apply(split_YMD).tolist(), columns=['Y','M','D'])], axis=1)
-        PRE_TMA['GENDER'] = PRE_TMA['GENDER'].apply(encoding_gender)
-        PRE_TMA['TRAVEL_STATUS_DESTINATION'] = PRE_TMA['TRAVEL_STATUS_DESTINATION'].apply(encoding_destination)
-
-        PRE_TA = pd.concat([PRE_TA, pd.DataFrame(data=PRE_TA['TRAVEL_PURPOSE'].apply(lambda x:encoding_purpose(x)).tolist(), columns=columns)], axis=1)
         PRE_VAI = VAI[['VISIT_AREA_ID', 'TRAVEL_ID', 'VISIT_ORDER', 'VISIT_AREA_NM',
         'VISIT_START_YMD', 'VISIT_END_YMD', 'ROAD_NM_ADDR', 'LOTNO_ADDR',
         'X_COORD', 'Y_COORD', 'RESIDENCE_TIME_MIN', 'VISIT_AREA_TYPE_CD', 'REVISIT_YN',
         'VISIT_CHC_REASON_CD', 'DGSTFN', 'REVISIT_INTENTION',
         'RCMDTN_INTENTION']].copy()
 
+        print("Encoding Traveler Data")
+
+        
+        PRE_TMA['GENDER'] = PRE_TMA['GENDER'].apply(encoding_gender)
+        PRE_TMA['TRAVEL_STATUS_DESTINATION'] = PRE_TMA['TRAVEL_STATUS_DESTINATION'].apply(encoding_destination)
+        
+
+        print("Encoding Trip Data")
+        PRE_TA['TRAVEL_PERIOD'] = TMA['TRAVEL_STATUS_YMD'].apply(tripdaycheck)
+        PRE_TA = pd.concat([PRE_TA, pd.DataFrame(data=TA['TRAVEL_START_YMD'].apply(split_YMD).tolist(), columns=['Y','M','D'])], axis=1)
+        PRE_TA = pd.concat([PRE_TA, pd.DataFrame(data=PRE_TA['TRAVEL_PURPOSE'].apply(lambda x:encoding_purpose(x)).tolist(), columns=columns)], axis=1)
+        
+
+        print("Encoding Dest Data")
+        
         PRE_VAI = pd.concat([PRE_VAI, pd.DataFrame(data=VAI['VISIT_START_YMD'].apply(split_YMD).tolist(), columns=['Y','M','D'])], axis=1)
         PRE_VAI = pd.concat([PRE_VAI, pd.DataFrame(data=VAI.fillna(" ").apply(lambda x: split_sg(x), axis=1).tolist(), columns=['S','G'])], axis=1)
         PRE_VAI['REVISIT_YN'] = PRE_VAI['REVISIT_YN'].apply(encoding_revisit)
@@ -75,16 +87,16 @@ class PreprocessingRawData():
             (PRE_VAI['VISIT_AREA_TYPE_CD']==24)
             ].index
                             )
-        PRE_VAI.fillna(0)
+        
         PRE_VAI=PRE_VAI.drop(PRE_VAI[
             (PRE_VAI['S']==0)|
             (PRE_VAI['G']==0)
             ].index)
         
         print("Prepare Data before Using for Model")
+        PRE_TMA.fillna(0, inplace=True)
         PRE_TMA['TRAVEL_STYL'] = reduce_feature(PRE_TMA[['TRAVEL_STYL_1', 'TRAVEL_STYL_2', 'TRAVEL_STYL_3', 'TRAVEL_STYL_4', 'TRAVEL_STYL_5', 'TRAVEL_STYL_6', 'TRAVEL_STYL_7', 'TRAVEL_STYL_8']])
         PRE_TMA['TRAVEL_MOTIVE'] = reduce_feature(PRE_TMA[['TRAVEL_MOTIVE_1', 'TRAVEL_MOTIVE_2', 'TRAVEL_MOTIVE_3']])
-
 
         return PRE_TMA.fillna(0), PRE_TA.fillna(0), PRE_VAI.fillna(0)
 
