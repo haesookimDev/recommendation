@@ -21,7 +21,7 @@ def get_model():
     best_run = client.search_runs(
         experiment_id, order_by=["metrics.loss"], max_results=1
     )[0]
-    download_model(best_run.run_id, 'model')
+    download_model(best_run.info.run_id, 'model')
     model = mlflow.pytorch.load_model(model_uri="./model")
     return model
 
