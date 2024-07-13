@@ -65,6 +65,7 @@ print("Data Loading")
 
 data = dataloader.load(PRE_TMA, PRE_TA, PRE_VAI)
 
+print("Model Testing")
 model.eval()
 with torch.no_grad():
     _, out = model(data.x, data.edge_index)
@@ -81,10 +82,12 @@ def get_embedding():
     loaded_embeddings = torch.load(artifact_uri.replace('file://', ''))    
     return loaded_embeddings
 
+print("Get Embedding")
 embedding_cache = EmbeddingCache()
 embedding_cache.cache = get_embedding()
 
 def find_next_dest(traveler_id, trip_id):
+    print("Dest Finding")
     model.eval()
     with torch.no_grad():
         cached_embeddings = embedding_cache.get('embeddings')
@@ -108,8 +111,10 @@ def predict(data: dict) -> PredictOut:
     trip_id = df['trip_id']
     similarities = ComputeSimilarity(df=df)
     if traveler_id==None:
+        print("Calculate Traveler Similarity")
         traveler_id = similarities.content_based_similarity_traveler(PRE_TMA)
     if trip_id == None:
+        print("Calculate Trip Similarity")
         trip_id = similarities.content_based_similarity_trip(PRE_TA)
     
     next_destination_id, predicted_scores = find_next_dest(traveler_id, trip_id)
@@ -148,5 +153,6 @@ if __name__ == "__main__":
             'MIMIC': 0,
             'ECO': 0,
             'HIKING': 0}
-
-    predict(data=data)
+    print("Predict")
+    prediction=predict(data=data)
+    print(f"result: {prediction}")
