@@ -85,7 +85,7 @@ embedding_cache = EmbeddingCache()
 embedding_cache.cache = get_embedding()
 
 
-def predict(data: PredictIn) -> PredictOut:
+def predict(data: dict) -> PredictOut:
     df = pd.DataFrame([data.dict()])
     traveler_id = df['traveler_id']
     trip_id = df['trip_id']
@@ -112,3 +112,36 @@ def predict(data: PredictIn) -> PredictOut:
     return PredictOut(next_destination_id=next_destination_id, predicted_rating=predicted_scores[0], predicted_recommend=predicted_scores[1], predicted_revisit=predicted_scores[2])
 
 
+if __name__ == __main__:
+
+    data = {'traveler_id': None,
+            'GENDER': None,
+            'AGE_GRP': None,
+            'TRAVEL_STATUS_DESTINATION': 11,
+            'TRAVEL_STYL': 6,
+            'TRAVEL_MOTIVE':1,
+            'trip_id': None,
+            'TRAVEL_PERIOD': 2,
+            'SHOPPING': 1,
+            'PARK': 1,
+            'HISTORY': 0,
+            'TOUR': 1,
+            'SPORTS': 0,
+            'ARTS': 0,
+            'PLAY': 0,
+            'CAMPING': 0,
+            'FESTIVAL': 0,
+            'SPA': 1,
+            'EDUCATION': 0,
+            'DRAMA': 0,
+            'PILGRIMAGE': 0,
+            'WELL': 0,
+            'SNS': 0,
+            'HOTEL': 1,
+            'NEWPLACE': 0,
+            'WITHPET': 0,
+            'MIMIC': 0,
+            'ECO': 0,
+            'HIKING': 0}
+
+    predict(data=data)
