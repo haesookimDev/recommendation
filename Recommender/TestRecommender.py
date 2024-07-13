@@ -112,7 +112,7 @@ def predict(data: dict) -> PredictOut:
     return PredictOut(next_destination_id=next_destination_id, predicted_rating=predicted_scores[0], predicted_recommend=predicted_scores[1], predicted_revisit=predicted_scores[2])
 
 
-if __name__ == __main__:
+if __name__ == "__main__":
 
     data = {'traveler_id': None,
             'GENDER': None,
