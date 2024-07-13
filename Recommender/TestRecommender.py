@@ -84,16 +84,7 @@ def get_embedding():
 embedding_cache = EmbeddingCache()
 embedding_cache.cache = get_embedding()
 
-
-def predict(data: dict) -> PredictOut:
-    df = pd.DataFrame([data.dict()])
-    traveler_id = df['traveler_id']
-    trip_id = df['trip_id']
-    similarities = ComputeSimilarity(df=df)
-    if traveler_id==None:
-        traveler_id = similarities.content_based_similarity_traveler(PRE_TMA)
-    if df['trip_id'] != None:
-        trip_id = similarities.content_based_similarity_trip(PRE_TA)
+def find_next_dest(traveler_id, trip_id):
     model.eval()
     with torch.no_grad():
         cached_embeddings = embedding_cache.get('embeddings')
@@ -108,6 +99,20 @@ def predict(data: dict) -> PredictOut:
         # 가장 유사한 여행지 선택
         next_destination_id = similarities.argmax().item()
         predicted_scores = model.linear(cached_embeddings[data.mask][next_destination_id])
+    return next_destination_id, predicted_scores
+
+
+def predict(data: dict) -> PredictOut:
+    df = pd.DataFrame([data.dict()])
+    traveler_id = df['traveler_id']
+    trip_id = df['trip_id']
+    similarities = ComputeSimilarity(df=df)
+    if traveler_id==None:
+        traveler_id = similarities.content_based_similarity_traveler(PRE_TMA)
+    if trip_id == None:
+        trip_id = similarities.content_based_similarity_trip(PRE_TA)
+    
+    next_destination_id, predicted_scores = find_next_dest(traveler_id, trip_id)
         
     return PredictOut(next_destination_id=next_destination_id, predicted_rating=predicted_scores[0], predicted_recommend=predicted_scores[1], predicted_revisit=predicted_scores[2])
 
