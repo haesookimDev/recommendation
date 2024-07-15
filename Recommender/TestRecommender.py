@@ -30,12 +30,14 @@ parser.add_argument("--model-name", dest="model_name", type=str, default="model"
 args = parser.parse_args()
 
 # MLflow 클라이언트 생성
+print("Creatin MLFlow Client")
 client = mlflow.MlflowClient()
 
 # 실험 ID 설정 (실제 실험 ID로 변경해야 함)
 experiment_id = "0"
 
 # 실험의 모든 실행 가져오기
+print("Finding best run id")
 runs = client.search_runs(experiment_id)
 
 best_run = client.search_runs(
@@ -44,6 +46,7 @@ best_run = client.search_runs(
 
 print(f"run_id: {best_run.info.run_id}" )
 
+print("Loading Model from MLFlow")
 model = mlflow.pytorch.load_model(f"runs:/{best_run.info.run_id}/{args.model_name}")
 
 #Data Fetching
@@ -78,7 +81,7 @@ print("loss :", loss)
 
 
 def get_embedding():
-    artifact_uri = mlflow.get_artifact_uri('embeddings/embedding_cache.pth')
+    artifact_uri = mlflow.artifacts.download_artifacts('embeddings/embedding_cache.pth')
     loaded_embeddings = torch.load(artifact_uri.replace('file://', ''))    
     return loaded_embeddings
 
