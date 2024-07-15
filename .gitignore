@@ -5,6 +5,7 @@ MLFlow/.env
 MLFlow/db_data
 MLFlow/minio_data
 Recommender/.env
+Recommender/embeddings
 Recommender/__pycache__
 Preprocessing/code
 Preprocessing/__pycache__

@@ -81,8 +81,10 @@ print("loss :", loss)
 
 
 def get_embedding():
-    artifact_uri = mlflow.artifacts.download_artifacts('embeddings/embedding_cache.pth')
-    loaded_embeddings = torch.load(artifact_uri.replace('file://', ''))    
+    mlflow.artifacts.download_artifacts(
+        run_id=best_run.info.run_id, artifact_path='embeddings', dst_path ='.'
+    )
+    loaded_embeddings = torch.load('embeddings/embedding_cache.pth')    
     return loaded_embeddings
 
 print("Get Embedding")
@@ -109,7 +111,7 @@ def find_next_dest(traveler_id, trip_id):
 
 
 def predict(data: dict) -> PredictOut:
-    df = pd.DataFrame([data.dict()])
+    df = pd.DataFrame([data])
     traveler_id = df['traveler_id']
     trip_id = df['trip_id']
     similarities = ComputeSimilarity(df=df)
