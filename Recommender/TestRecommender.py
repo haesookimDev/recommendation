@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -16,6 +17,7 @@ import mlflow
 from dotenv import load_dotenv
 from argparse import ArgumentParser
 
+print("Setting Default Configuration")
 load_dotenv()
 
 os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv('MLFLOW_S3_ENDPOINT_URL')
@@ -97,7 +99,7 @@ def find_next_dest(traveler_id, trip_id):
     with torch.no_grad():
         cached_embeddings = embedding_cache.get('embeddings')
 
-        traveler_embedding = model.linear(cached_embeddings[traveler_id])    
+        traveler_embedding = model.linear(cached_embeddings[traveler_id])
         trip_embedding = model.linear(cached_embeddings[traveler_len + trip_id])
 
         # 모든 여행지와의 유사도 계산
@@ -110,10 +112,10 @@ def find_next_dest(traveler_id, trip_id):
     return next_destination_id, predicted_scores
 
 
-def predict(data: dict) -> PredictOut:
-    df = pd.DataFrame([data])
-    traveler_id = df['traveler_id']
-    trip_id = df['trip_id']
+def predict(input: dict) -> PredictOut:
+    df = pd.DataFrame([input])
+    traveler_id = df['traveler_id'].squeeze()
+    trip_id = df['trip_id'].squeeze()
     similarities = ComputeSimilarity(df=df)
     if traveler_id==None:
         print("Calculate Traveler Similarity")
@@ -123,15 +125,21 @@ def predict(data: dict) -> PredictOut:
         trip_id = similarities.content_based_similarity_trip(PRE_TA)
     
     next_destination_id, predicted_scores = find_next_dest(traveler_id, trip_id)
-        
-    return PredictOut(next_destination_id=next_destination_id, predicted_rating=predicted_scores[0], predicted_recommend=predicted_scores[1], predicted_revisit=predicted_scores[2])
+    print(f"Similar traveler: {traveler_id},\n{PRE_TMA.iloc[traveler_id].squeeze()}")
+    print(f"Similar trip: {trip_id}, \n{PRE_TA.iloc[trip_id].squeeze()}")
+
+    return PredictOut(next_destination_id=next_destination_id, 
+                      predicted_rating=round(int(predicted_scores[0]), 2), 
+                      predicted_recommend=round(int(predicted_scores[1]), 2), 
+                      predicted_revisit=round(int(predicted_scores[2]), 2))
 
 
 if __name__ == "__main__":
 
-    data = {'traveler_id': None,
+    input = {'traveler_id': None,
             'GENDER': None,
             'AGE_GRP': None,
+            'M': 7,
             'TRAVEL_STATUS_DESTINATION': 11,
             'TRAVEL_STYL': 6,
             'TRAVEL_MOTIVE':1,
@@ -159,5 +167,7 @@ if __name__ == "__main__":
             'ECO': 0,
             'HIKING': 0}
     print("Predict")
-    prediction=predict(data=data)
+    print(f"input data: {input}")
+    prediction=predict(input=input)
     print(f"result: {prediction}")
+    print(f"Next Dest Info: \n{PRE_VAI.iloc[prediction.next_destination_id].squeeze()}")
