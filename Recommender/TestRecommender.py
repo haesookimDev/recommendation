@@ -44,9 +44,9 @@ runs = client.search_runs(experiment_id)
 
 best_run = client.search_runs(
         experiment_id, order_by=["metrics.loss"], max_results=1
-    )[0]
-
-print(f"run_id: {best_run.info.run_id}" )
+    )
+print(best_run)
+print(f"run_id: {best_run[0].info.run_id}" )
 
 print("Loading Model from MLFlow")
 model = mlflow.pytorch.load_model(f"runs:/{best_run.info.run_id}/{args.model_name}")
