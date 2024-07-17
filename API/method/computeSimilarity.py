@@ -38,17 +38,18 @@ class ComputeSimilarity():
         traveler_vector = np.array([self.TRAVEL_STYL, self.TRAVEL_MOTIVE])
         
         if (self.GENDER!=None)&(self.AGE_GRP!=None):
-            filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']==self.AGE_GRP)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['AGE_GRP']>=self.AGE_GRP-10)&(all_traveler['AGE_GRP']<=self.AGE_GRP+10)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
             filtered_traveler_indices = filtered_traveler.index
         elif (self.GENDER!=None)&(self.AGE_GRP==None):
             filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['GENDER']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
             filtered_traveler_indices = filtered_traveler.index
         elif (self.GENDER==None)&(self.AGE_GRP!=None):
-            filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['AGE_GRP']==self.GENDER)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
+            filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['AGE_GRP']>=self.AGE_GRP-10)&(all_traveler['AGE_GRP']<=self.AGE_GRP+10)&(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
             filtered_traveler_indices = filtered_traveler.index
         else:
             filtered_traveler: pd.DataFrame = all_traveler.loc[(all_traveler['TRAVEL_STATUS_DESTINATION']==self.TRAVEL_STATUS_DESTINATION)]
             filtered_traveler_indices = filtered_traveler.index
+
 
         all_traveler_vector = np.array([[t['TRAVEL_STYL'], t['TRAVEL_MOTIVE']] for idx, t in filtered_traveler.iterrows()])
         

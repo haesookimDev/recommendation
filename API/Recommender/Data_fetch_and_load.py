@@ -1,11 +1,11 @@
 import sys,os
-import pandas as pd
-
-from Data_processing import DataProcessing
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import pandas as pd
 
-from Preprocessing.PreprocessingTravelLog import PreprocessingRawData
+from Recommender.Data_processing import DataProcessing
+
+from Recommender.PreprocessingTravelLog import PreprocessingRawData
 
 class DataFetchandLoad():
     def __init__(self, TMA: pd.DataFrame, TA: pd.DataFrame, VAI: pd.DataFrame):

@@ -1,10 +1,9 @@
 import os
 from dotenv import load_dotenv
 
-from DownloadModel import download_model
 from Recommender.Data_fetch_and_load import DataFetchandLoad
 from Recommender.EmbeddingCache import EmbeddingCache
-from API.method.computeSimilarity import ComputeSimilarity
+from method.computeSimilarity import ComputeSimilarity
 
 import torch
 import torch.nn as nn
@@ -13,7 +12,7 @@ import torch.nn.functional as F
 import mlflow
 import pandas as pd
 from fastapi import FastAPI
-from API.method.Schemas import PredictIn, PredictOut
+from method.Schemas import PredictIn, PredictOut
 
 print("Setting Default Configuration")
 load_dotenv()
@@ -31,7 +30,6 @@ best_run = client.search_runs(
 )[0]
 
 def get_model():
-    
     model = mlflow.pytorch.load_model(f"runs:/{best_run.info.run_id}/model")
     return model
 
@@ -39,8 +37,7 @@ def get_embedding():
     mlflow.artifacts.download_artifacts(
         run_id=best_run.info.run_id, artifact_path='embeddings', dst_path ='.'
     )
-    artifact_uri = mlflow.get_artifact_uri('embeddings/embedding_cache.pth')
-    loaded_embeddings = torch.load(artifact_uri.replace('file://', ''))    
+    loaded_embeddings = torch.load('embeddings/embedding_cache.pth')  
     return loaded_embeddings
 
 MODEL = get_model()
@@ -102,16 +99,18 @@ app = FastAPI()
 @app.post("/predict", response_model=PredictOut)
 def predict(data: PredictIn) -> PredictOut:
     df = pd.DataFrame([data.dict()])
-    traveler_id = df['traveler_id']
-    trip_id = df['trip_id']
+    traveler_id = df['traveler_id'].squeeze()
+    trip_id = df['trip_id'].squeeze()
     similarities = ComputeSimilarity(df=df)
     if traveler_id==None:
         traveler_id = similarities.content_based_similarity_traveler(PRE_TMA)
-    if df['trip_id'] != None:
+    if trip_id == None:
         trip_id = similarities.content_based_similarity_trip(PRE_TA)
-    
+    print(traveler_id, trip_id)
     next_destination_id, predicted_scores = find_next_dest(traveler_id, trip_id)
-    print(f"Similar traveler: {traveler_id},\n{PRE_TMA.iloc[traveler_id].squeeze()}")
-    print(f"Similar trip: {trip_id}, \n{PRE_TA.iloc[trip_id].squeeze()}")
+    print(f"Next dest: {next_destination_id}, \n{PRE_VAI.iloc[next_destination_id].squeeze()}")
         
-    return PredictOut(next_destination_id=next_destination_id, predicted_rating=predicted_scores[0], predicted_recommend=predicted_scores[1], predicted_revisit=predicted_scores[2])
+    return PredictOut(next_destination_id=next_destination_id, 
+                      predicted_rating=round(float(predicted_scores[0]), 2), 
+                      predicted_recommend=round(float(predicted_scores[1]), 2), 
+                      predicted_revisit=round(float(predicted_scores[2]), 2))

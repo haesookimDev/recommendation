@@ -49,7 +49,7 @@ print(best_run)
 print(f"run_id: {best_run[0].info.run_id}" )
 
 print("Loading Model from MLFlow")
-model = mlflow.pytorch.load_model(f"runs:/{best_run.info.run_id}/{args.model_name}")
+model = mlflow.pytorch.load_model(f"runs:/{best_run[0].info.run_id}/{args.model_name}")
 
 #Data Fetching
 print("Data Fetching")
@@ -84,7 +84,7 @@ print("loss :", loss)
 
 def get_embedding():
     mlflow.artifacts.download_artifacts(
-        run_id=best_run.info.run_id, artifact_path='embeddings', dst_path ='.'
+        run_id=best_run[0].info.run_id, artifact_path='embeddings', dst_path ='.'
     )
     loaded_embeddings = torch.load('embeddings/embedding_cache.pth')
     return loaded_embeddings
@@ -129,9 +129,9 @@ def predict(input: dict) -> PredictOut:
     print(f"Similar trip: {trip_id}, \n{PRE_TA.iloc[trip_id].squeeze()}")
 
     return PredictOut(next_destination_id=next_destination_id, 
-                      predicted_rating=round(int(predicted_scores[0]), 2), 
-                      predicted_recommend=round(int(predicted_scores[1]), 2), 
-                      predicted_revisit=round(int(predicted_scores[2]), 2))
+                      predicted_rating=round(float(predicted_scores[0]), 2), 
+                      predicted_recommend=round(float(predicted_scores[1]), 2), 
+                      predicted_revisit=round(float(predicted_scores[2]), 2))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,53 @@
+services:
+  api-with-model:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-with-model
+    ports:
+      - 8000:8000
+    healthcheck:
+      test:
+        - CMD
+        - curl -X POST http://localhost:8000/predict
+        - -H
+        - "Content-Type: application/json"
+        - -d
+        - "{'traveler_id': None,
+            'GENDER': None,
+            'AGE_GRP': None,
+            'M': 7,
+            'TRAVEL_STATUS_DESTINATION': 11,
+            'TRAVEL_STYL': 6,
+            'TRAVEL_MOTIVE':1,
+            'trip_id': None,
+            'TRAVEL_PERIOD': 2,
+            'SHOPPING': 1,
+            'PARK': 1,
+            'HISTORY': 0,
+            'TOUR': 1,
+            'SPORTS': 0,
+            'ARTS': 0,
+            'PLAY': 0,
+            'CAMPING': 0,
+            'FESTIVAL': 0,
+            'SPA': 1,
+            'EDUCATION': 0,
+            'DRAMA': 0,
+            'PILGRIMAGE': 0,
+            'WELL': 0,
+            'SNS': 0,
+            'HOTEL': 1,
+            'NEWPLACE': 0,
+            'WITHPET': 0,
+            'MIMIC': 0,
+            'ECO': 0,
+            'HIKING': 0}"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  default:
+    name: mlops-network
+    external: true

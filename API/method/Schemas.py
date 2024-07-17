@@ -5,6 +5,7 @@ class PredictIn(BaseModel):
     traveler_id: Optional[int] = None
     GENDER: Optional[int] = None
     AGE_GRP: Optional[int] = None
+    M: int
     TRAVEL_STATUS_DESTINATION: int
     TRAVEL_STYL: int
     TRAVEL_MOTIVE:int
