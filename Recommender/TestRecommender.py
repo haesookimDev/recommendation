@@ -4,8 +4,8 @@ import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from API.Schemas import PredictIn, PredictOut
-from API.computeSimilarity import ComputeSimilarity
+from API.method.Schemas import PredictIn, PredictOut
+from API.method.computeSimilarity import ComputeSimilarity
 from Data_fetch_and_load import DataFetchandLoad
 from EmbeddingCache import EmbeddingCache
 
@@ -86,7 +86,7 @@ def get_embedding():
     mlflow.artifacts.download_artifacts(
         run_id=best_run.info.run_id, artifact_path='embeddings', dst_path ='.'
     )
-    loaded_embeddings = torch.load('embeddings/embedding_cache.pth')    
+    loaded_embeddings = torch.load('embeddings/embedding_cache.pth')
     return loaded_embeddings
 
 print("Get Embedding")

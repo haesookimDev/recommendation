@@ -1,10 +1,10 @@
-import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+import os
+from dotenv import load_dotenv
 
 from DownloadModel import download_model
 from Recommender.Data_fetch_and_load import DataFetchandLoad
 from Recommender.EmbeddingCache import EmbeddingCache
-from computeSimilarity import ComputeSimilarity
+from API.method.computeSimilarity import ComputeSimilarity
 
 import torch
 import torch.nn as nn
@@ -13,19 +13,32 @@ import torch.nn.functional as F
 import mlflow
 import pandas as pd
 from fastapi import FastAPI
-from Schemas import PredictIn, PredictOut
+from API.method.Schemas import PredictIn, PredictOut
+
+print("Setting Default Configuration")
+load_dotenv()
+
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = os.getenv('MLFLOW_S3_ENDPOINT_URL')
+os.environ["MLFLOW_TRACKING_URI"] = os.getenv('MLFLOW_TRACKING_URI')
+os.environ["AWS_ACCESS_KEY_ID"] = os.getenv('AWS_ACCESS_KEY_ID')
+os.environ["AWS_SECRET_ACCESS_KEY"] = os.getenv('AWS_SECRET_ACCESS_KEY')
+
+
+client = mlflow.tracking.MlflowClient()
+experiment_id = "0"
+best_run = client.search_runs(
+    experiment_id, order_by=["metrics.loss"], max_results=1
+)[0]
 
 def get_model():
-    client = mlflow.tracking.MlflowClient()
-    experiment_id = "0"
-    best_run = client.search_runs(
-        experiment_id, order_by=["metrics.loss"], max_results=1
-    )[0]
-    download_model(best_run.info.run_id, 'model')
-    model = mlflow.pytorch.load_model(model_uri="./model")
+    
+    model = mlflow.pytorch.load_model(f"runs:/{best_run.info.run_id}/model")
     return model
 
 def get_embedding():
+    mlflow.artifacts.download_artifacts(
+        run_id=best_run.info.run_id, artifact_path='embeddings', dst_path ='.'
+    )
     artifact_uri = mlflow.get_artifact_uri('embeddings/embedding_cache.pth')
     loaded_embeddings = torch.load(artifact_uri.replace('file://', ''))    
     return loaded_embeddings
