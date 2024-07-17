@@ -5,9 +5,9 @@ WORKDIR /usr/app
 RUN pip install -U pip &&\
     pip install mlflow pandas scikit-learn "fastapi[all]"
 
-    COPY api.py api.py
-    COPY .env .env
-    COPY Recommender/ Recommender/
-    COPY method/ method/
+COPY api.py api.py
+COPY .env .env
+COPY Recommender/ Recommender/
+COPY method/ method/
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--reload"]
