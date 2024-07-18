@@ -66,3 +66,7 @@ services:
 volumes:
     minio_data:
     db_data:
+networks:
+  default:
+    name: mlops-network
+    external: true
