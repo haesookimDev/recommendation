@@ -1,7 +1,9 @@
 import sys,os
 import pandas as pd
 
-from Data_processing import DataProcessing
+sys.path.append('D:\\MLOps\\recommendation')
+
+from Recommender.Data_processing import DataProcessing
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
