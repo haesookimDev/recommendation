@@ -8,6 +8,7 @@ class TravelRecommendationGNN(torch.nn.Module):
         self.conv1 = GCNConv(num_features, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
+
         self.linear = torch.nn.Linear(hidden_channels, num_classes)
 
     def forward(self, x, edge_index):
@@ -18,4 +19,46 @@ class TravelRecommendationGNN(torch.nn.Module):
         x = F.relu(x)
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.conv3(x, edge_index)
+
+        x = F.normalize(x, p=2, dim=1)
+
         return x, self.linear(x)
+    
+
+class TravelRecommendationModel(torch.nn.Module):
+    def __init__(self, gnn, hidden_channels, num_classes, num_heads=4):
+        super(TravelRecommendationModel, self).__init__()
+        self.gnn, _ = gnn
+        self.attention = torch.nn.MultiheadAttention(hidden_channels, num_heads)
+        self.fc = torch.nn.Linear(hidden_channels, num_classes)
+        
+    def forward(self, x, edge_index, traveler_idx, trip_idx, dest_idx):
+        embeddings = self.gnn(x, edge_index)
+        
+        traveler_emb = embeddings[traveler_idx].unsqueeze(0)
+        trip_emb = embeddings[trip_idx].unsqueeze(0)
+        dest_emb = embeddings[dest_idx]
+        
+        # 어텐션 메커니즘을 사용하여 traveler와 trip 임베딩 결합
+        combined_emb, _ = self.attention(traveler_emb, trip_emb, trip_emb)
+        combined_emb = combined_emb.squeeze(0)
+        
+        # 코사인 유사도 계산
+        similarity = F.cosine_similarity(combined_emb, dest_emb, dim=1)
+        
+        # 점수 예측
+        scores = self.fc(dest_emb)
+        
+        return similarity, scores
+    
+class ContrastiveLoss():
+    def __init__(self, similarity, labels, temperature=0.5):
+        self.similarity = similarity
+        self.labels = labels
+        self.temperature = temperature
+    def loss(self):
+        exp_sim = torch.exp(self.similarity / self.temperature)
+        pos_sum = torch.sum(exp_sim * self.labels, dim=1)
+        neg_sum = torch.sum(exp_sim * (1 - self.labels), dim=1)
+        loss = -torch.log(pos_sum / (pos_sum + neg_sum)).mean()
+        return loss
