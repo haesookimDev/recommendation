@@ -12,3 +12,5 @@ Preprocessing/__pycache__
 API/__pycache__
 API/.env
 API/Recommender/code
+test/__pycache__
+test/.env
