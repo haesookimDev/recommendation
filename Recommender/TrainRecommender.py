@@ -3,7 +3,7 @@ import numpy as np
 from datetime import datetime
 import os, sys
 
-from model_GNN import TravelRecommendationGNN
+from model_GNN import TravelRecommendationGNN, TravelRecommendationModel, ContrastiveLoss
 from Data_fetch_and_load import DataFetchandLoad
 
 from EmbeddingCache import EmbeddingCache
@@ -50,11 +50,12 @@ num_features = data.x.size(1)
 hidden_channels = 64
 num_classes = 3  # 평점, 추천 점수, 재방문 의향 점수
 epochs = 300
-
-model = TravelRecommendationGNN(num_features, hidden_channels, num_classes)
+gnn = TravelRecommendationGNN(num_features, hidden_channels, num_classes)
+model = TravelRecommendationModel(gnn, num_features, hidden_channels, num_classes)
 embedding_cache = EmbeddingCache()
 
 loss_fn = nn.MSELoss()
+# loss = ContrastiveLoss()
 metric_fn = Accuracy(task="multiclass", num_classes=num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
