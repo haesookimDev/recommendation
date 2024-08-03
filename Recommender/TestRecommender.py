@@ -8,6 +8,7 @@ from API.method.Schemas import PredictIn, PredictOut
 from API.method.computeSimilarity import ComputeSimilarity
 from Data_fetch_and_load import DataFetchandLoad
 from EmbeddingCache import EmbeddingCache
+from model_GNN import ContrastiveLoss
 
 import torch
 import torch.nn as nn
@@ -70,14 +71,27 @@ print("Data Loading")
 
 data = dataloader.load(PRE_TMA, PRE_TA, PRE_VAI)
 
+# 배치 샘플링 (실제 구현에서는 더 효율적인 방법 사용 필요)
+batch=64
+traveler_idx = torch.randint(0, data.num_travelers, (batch,))
+trip_idx = torch.randint(data.num_travelers, data.num_travelers + data.num_trips, (batch,))
+pos_dest_idx = torch.randint(data.num_travelers + data.num_trips, data.num_nodes, (batch,))
+neg_dest_idx = torch.randint(data.num_travelers + data.num_trips, data.num_nodes, (batch, 5))  # 각 positive에 대해 5개의 negative
+
 print("Model Testing")
 model.eval()
 with torch.no_grad():
-    _, out = model(data.x, data.edge_index)
+    similarity, scores, _ = model(data.x, data.edge_index, traveler_idx, trip_idx, torch.cat([pos_dest_idx.unsqueeze(1), neg_dest_idx], dim=1))
 
+    labels = torch.zeros_like(similarity)
+    labels[:, 0] = 1  # 첫 번째 목적지가 positive sample
+
+    cont_loss = ContrastiveLoss(similarity, labels)
     loss_fn = nn.MSELoss()
 
-    loss = loss_fn(out[data.mask], data.y[data.mask])
+    mse_loss = loss_fn(scores[:, 0, :], data.y[pos_dest_idx])
+
+    loss = cont_loss.loss() + mse_loss
     
 print("loss :", loss)
 
@@ -93,23 +107,27 @@ print("Get Embedding")
 embedding_cache = EmbeddingCache()
 embedding_cache.cache = get_embedding()
 
-def find_next_dest(traveler_id, trip_id):
+def find_next_dest(traveler_id, trip_id, num_recommendations=5):
     print("Dest Finding")
     model.eval()
     with torch.no_grad():
-        cached_embeddings = embedding_cache.get('embeddings')
+        traveler_idx = torch.tensor([traveler_id]).long()
+        trip_idx = torch.tensor([data.num_travelers + trip_id]).long()
+        dest_idx = torch.arange(data.num_travelers + data.num_trips, data.num_nodes).long()
 
-        traveler_embedding = model.linear(cached_embeddings[traveler_id])
-        trip_embedding = model.linear(cached_embeddings[traveler_len + trip_id])
-
-        # 모든 여행지와의 유사도 계산
-        destination_embeddings = model.linear(cached_embeddings[data.mask])
-        similarities = F.cosine_similarity(traveler_embedding + trip_embedding, destination_embeddings)
-
-        # 가장 유사한 여행지 선택
-        next_destination_id = similarities.argmax().item()
-        predicted_scores = model.linear(cached_embeddings[data.mask][next_destination_id])
-    return next_destination_id, predicted_scores
+        print(f"traveler_idx.size(): {traveler_idx.size()}")
+        print(f"trip_idxeler_idx.size(): {trip_idx.size()}")
+        print(f"dest_idx.size(): {dest_idx.size()}")
+        
+        similarity, scores, _ = model(data.x, data.edge_index, traveler_idx, trip_idx, dest_idx)
+        
+        # 유사도와 예측 점수를 결합하여 최종 순위 결정
+        final_scores = similarity.squeeze(0) + F.softmax(scores, dim=1)[:, 0]
+        
+        top_destinations = final_scores.argsort(descending=True)[:num_recommendations]
+        top_scores = scores[top_destinations]
+        
+    return top_destinations, top_scores
 
 
 def predict(input: dict) -> PredictOut:
@@ -124,14 +142,16 @@ def predict(input: dict) -> PredictOut:
         print("Calculate Trip Similarity")
         trip_id = similarities.content_based_similarity_trip(PRE_TA)
     
+    print(f"traveler_id: {traveler_id}")
+    print(f"trip_id: {trip_id}")
     next_destination_id, predicted_scores = find_next_dest(traveler_id, trip_id)
     print(f"Similar traveler: {traveler_id},\n{PRE_TMA.iloc[traveler_id].squeeze()}")
     print(f"Similar trip: {trip_id}, \n{PRE_TA.iloc[trip_id].squeeze()}")
 
-    return PredictOut(next_destination_id=next_destination_id, 
-                      predicted_rating=round(float(predicted_scores[0]), 2), 
-                      predicted_recommend=round(float(predicted_scores[1]), 2), 
-                      predicted_revisit=round(float(predicted_scores[2]), 2))
+    return PredictOut(next_destination_id=next_destination_id[0].item(), 
+                      predicted_rating=round(float(predicted_scores[0][0].item()), 2), 
+                      predicted_recommend=round(float(predicted_scores[0][1].item()), 2), 
+                      predicted_revisit=round(float(predicted_scores[0][2].item()), 2))
 
 
 if __name__ == "__main__":
@@ -140,30 +160,30 @@ if __name__ == "__main__":
             'GENDER': None,
             'AGE_GRP': None,
             'M': 7,
-            'TRAVEL_STATUS_DESTINATION': 11,
+            'TRAVEL_STATUS_DESTINATION': 41,
             'TRAVEL_STYL': 6,
             'TRAVEL_MOTIVE':1,
             'trip_id': None,
             'TRAVEL_PERIOD': 2,
-            'SHOPPING': 1,
-            'PARK': 1,
+            'SHOPPING': 0,
+            'PARK': 0,
             'HISTORY': 0,
-            'TOUR': 1,
+            'TOUR': 0,
             'SPORTS': 0,
             'ARTS': 0,
-            'PLAY': 0,
+            'PLAY': 4,
             'CAMPING': 0,
             'FESTIVAL': 0,
-            'SPA': 1,
-            'EDUCATION': 0,
+            'SPA': 0,
+            'EDUCATION': 4,
             'DRAMA': 0,
             'PILGRIMAGE': 0,
-            'WELL': 0,
+            'WELL': 1,
             'SNS': 0,
             'HOTEL': 1,
             'NEWPLACE': 0,
             'WITHPET': 0,
-            'MIMIC': 0,
+            'MIMIC': 1,
             'ECO': 0,
             'HIKING': 0}
     print("Predict")

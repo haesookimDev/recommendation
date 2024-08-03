@@ -79,7 +79,10 @@ class DataProcessing():
 
         # 목표값 준비
         print("Prepare Target")
-        total_nodes = len(travelers) + len(trips) + len(destinations)
+        num_travelers = len(travelers)
+        num_trips = len(trips)
+        num_destinations = len(destinations)
+        total_nodes = num_travelers + num_trips + num_destinations
         y = torch.zeros((total_nodes, 3), dtype=torch.float)
 
         destination_start_idx = len(travelers) + len(trips)
@@ -89,10 +92,14 @@ class DataProcessing():
                 d.get('DGSTFN', 0), d.get('RCMDTN_INTENTION', 0), d.get('REVISIT_INTENTION', 0)
             ])
 
-        mask = torch.zeros(total_nodes, dtype=torch.bool)
-        mask[destination_start_idx:] = True
+        data = Data(x=x, edge_index=edge_index, y=y)
 
-        return Data(x=x, edge_index=edge_index, y=y, mask=mask)
+        data.num_travelers = num_travelers
+        data.num_trips = num_trips
+        data.num_nodes = total_nodes
+        data.max_features = max_features
+
+        return data
 
 def create_edge_index(travelers, trips, destinations):
     edges = []

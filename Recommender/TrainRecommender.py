@@ -49,53 +49,64 @@ print("Prepare Model")
 num_features = data.x.size(1)
 hidden_channels = 64
 num_classes = 3  # 평점, 추천 점수, 재방문 의향 점수
+batch=64
 epochs = 300
+lr=0.01
 gnn = TravelRecommendationGNN(num_features, hidden_channels, num_classes)
-model = TravelRecommendationModel(gnn, num_features, hidden_channels, num_classes)
+model = TravelRecommendationModel(gnn, hidden_channels, num_classes)
 embedding_cache = EmbeddingCache()
 
 loss_fn = nn.MSELoss()
 # loss = ContrastiveLoss()
 metric_fn = Accuracy(task="multiclass", num_classes=num_classes).to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+# 배치 샘플링 (실제 구현에서는 더 효율적인 방법 사용 필요)
+traveler_idx = torch.randint(0, data.num_travelers, (batch,))
+trip_idx = torch.randint(data.num_travelers, data.num_travelers + data.num_trips, (batch,))
+pos_dest_idx = torch.randint(data.num_travelers + data.num_trips, data.num_nodes, (batch,))
+neg_dest_idx = torch.randint(data.num_travelers + data.num_trips, data.num_nodes, (batch, 5))  # 각 positive에 대해 5개의 negative
 
 # 모델 학습 함수
-def train_model(model, data, loss_fn, metrics_fn, optimizer, epochs=200):
+def train_model(model, data, loss_fn, optimizer, epochs=200):
     model.train()
     for epoch in range(epochs):
         optimizer.zero_grad()
-        _, out = model(data.x, data.edge_index)
+        
+        similarity, scores, _ = model(data.x, data.edge_index, traveler_idx, trip_idx, torch.cat([pos_dest_idx.unsqueeze(1), neg_dest_idx], dim=1))
 
+        labels = torch.zeros_like(similarity)
+        labels[:, 0] = 1  # 첫 번째 목적지가 positive sample
+        cont_loss = ContrastiveLoss(similarity, labels)
 
-        loss = loss_fn(out[data.mask], data.y[data.mask])
-        accuracy = metrics_fn(out[data.mask], data.y[data.mask])
+        mse_loss = loss_fn(scores[:, 0, :], data.y[pos_dest_idx])
+        loss = cont_loss.loss() + mse_loss
 
         loss.backward()
         optimizer.step()
         if (epoch + 1) % 10 == 0:
             mlflow.log_metric("loss", f"{loss:3f}", step=((epoch + 1) // 10))
-            mlflow.log_metric("accuracy", f"{accuracy:3f}", step=((epoch + 1) // 10))
-            print(f'Epoch {epoch+1:03d}, Loss: {loss.item():.4f}, Accuracy: {accuracy:3f}')
+            print(f'Epoch {epoch+1:03d}, Loss: {loss.item():.4f}')
         model.eval()
         with torch.no_grad():
-            embeddings, _ = model(data.x, data.edge_index)
+            _, _, embeddings = model(data.x, data.edge_index, traveler_idx, trip_idx, torch.cat([pos_dest_idx.unsqueeze(1), neg_dest_idx], dim=1))
         embedding_cache.set('embeddings', embeddings)
 
 print("Start Train Model")
 
 
 
-signature = mlflow.models.signature.infer_signature(model_input=data.x.detach().numpy(), model_output=model(data.x, data.edge_index)[1].detach().numpy())
+signature = mlflow.models.signature.infer_signature(model_input=data.x.detach().numpy(), model_output=model(data.x, data.edge_index, traveler_idx, trip_idx, torch.cat([pos_dest_idx.unsqueeze(1), neg_dest_idx], dim=1))[1].detach().numpy())
 input_sample = data.x[:10].detach().numpy()
 
 with mlflow.start_run():
     params = {
         "epochs": epochs,
-        "learning_rate": 1e-3,
-        "batch_size": 64,
+        "learning_rate": lr,
+        "batch_size": batch,
         "loss_function": loss_fn.__class__.__name__,
         "metric_function": metric_fn.__class__.__name__,
-        "optimizer": "SGD",
+        "optimizer": optimizer,
         "signature": signature
     }
     # Log training parameters.
@@ -106,7 +117,7 @@ with mlflow.start_run():
         f.write(str(summary(model)))
     mlflow.log_artifact("model_summary.txt", artifact_path="model_summary")
 
-    train_model(model, data, loss_fn, metric_fn, optimizer, epochs)
+    train_model(model, data, loss_fn, optimizer, epochs)
 
     # Save the trained model to MLflow.
     mlflow.pytorch.log_model(model, "model", signature=signature, input_example=input_sample)
