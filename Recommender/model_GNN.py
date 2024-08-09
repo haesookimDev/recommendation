@@ -8,6 +8,9 @@ class TravelRecommendationGNN(torch.nn.Module):
         self.conv1 = GCNConv(num_features, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, hidden_channels)
         self.conv3 = GCNConv(hidden_channels, hidden_channels)
+        self.conv4 = GCNConv(hidden_channels, hidden_channels)
+        self.conv5 = GCNConv(hidden_channels, hidden_channels)
+        self.conv6 = GCNConv(hidden_channels, hidden_channels)
 
     def forward(self, x, edge_index):
         x = self.conv1(x, edge_index)
@@ -17,6 +20,15 @@ class TravelRecommendationGNN(torch.nn.Module):
         x = F.relu(x)
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.conv3(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.conv4(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.conv5(x, edge_index)
+        x = F.relu(x)
+        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.conv6(x, edge_index)
 
         x = F.normalize(x, p=2, dim=1)
 

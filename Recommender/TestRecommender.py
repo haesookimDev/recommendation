@@ -119,10 +119,15 @@ def find_next_dest(traveler_id, trip_id, num_recommendations=5):
         print(f"trip_idxeler_idx.size(): {trip_idx.size()}")
         print(f"dest_idx.size(): {dest_idx.size()}")
         
-        similarity, scores, _ = model(data.x, data.edge_index, traveler_idx, trip_idx, dest_idx)
+        similarity, scores, embedding = model(data.x, data.edge_index, traveler_idx, trip_idx, dest_idx)
+
+        print(f"traveler_embedding: {embedding[traveler_idx]}")
+        print(f"trip_embedding: {embedding[trip_idx]}")
+        print(f"similarity: {similarity[:10]}")
         
         # 유사도와 예측 점수를 결합하여 최종 순위 결정
         final_scores = similarity.squeeze(0) + F.softmax(scores, dim=1)[:, 0]
+
         
         top_destinations = final_scores.argsort(descending=True)[:num_recommendations]
         top_scores = scores[top_destinations]
@@ -156,36 +161,36 @@ def predict(input: dict) -> PredictOut:
 
 if __name__ == "__main__":
 
-    input = {'traveler_id': None,
+    input = {'traveler_id': 1,
             'GENDER': None,
             'AGE_GRP': None,
             'M': 7,
-            'TRAVEL_STATUS_DESTINATION': 41,
-            'TRAVEL_STYL': 6,
-            'TRAVEL_MOTIVE':1,
-            'trip_id': None,
-            'TRAVEL_PERIOD': 2,
+            'TRAVEL_STATUS_DESTINATION': 11,
+            'TRAVEL_STYL': 0,
+            'TRAVEL_MOTIVE':0,
+            'trip_id': 3,
+            'TRAVEL_PERIOD': 1,
             'SHOPPING': 0,
             'PARK': 0,
             'HISTORY': 0,
             'TOUR': 0,
             'SPORTS': 0,
             'ARTS': 0,
-            'PLAY': 4,
+            'PLAY': 0,
             'CAMPING': 0,
             'FESTIVAL': 0,
-            'SPA': 0,
-            'EDUCATION': 4,
-            'DRAMA': 0,
+            'SPA': 1,
+            'EDUCATION': 0,
+            'DRAMA': 1,
             'PILGRIMAGE': 0,
             'WELL': 1,
             'SNS': 0,
             'HOTEL': 1,
             'NEWPLACE': 0,
             'WITHPET': 0,
-            'MIMIC': 1,
+            'MIMIC': 0,
             'ECO': 0,
-            'HIKING': 0}
+            'HIKING': 1}
     print("Predict")
     print(f"input data: {input}")
     prediction=predict(input=input)
